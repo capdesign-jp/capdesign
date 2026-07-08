@@ -4,101 +4,150 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cap Design</title>
+
+<!-- ==========================================================
+     Googleフォントの読み込み
+     Orbitron   : ロゴ・見出し用の近未来的なフォント
+     Inter      : 本文用の読みやすいフォント
+     JetBrains Mono : ラベルや日付などコード風の細字表示に使用
+     すべてOFL(Open Font License)で商用利用も無料・無制限
+========================================================== -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <style>
+  /* ==========================================================
+     ① 色・共通変数の定義(CSS変数 = カスタムプロパティ)
+     ここで色を1箇所にまとめておくと、後で配色を変えたい時に
+     この:root の中だけ書き換えれば全体に反映される
+  ========================================================== */
   :root {
-    --bg: #08080d;
-    --bg-soft: #0f0f18;
-    --pink: #ff2e88;
-    --cyan: #00e5ff;
-    --purple: #a855f7;
-    --text: #eceaf4;
-    --muted: #6f6c85;
-    --line: #1c1b28;
+    --bg: #14141f;        /* ページ全体の背景色。真っ黒(#000)ではなく
+                              少し明るい紺にして「暗すぎない」印象に */
+    --bg-soft: #1b1b29;   /* 背景よりわずかに明るいサブ背景 */
+    --card: #1f1f30;      /* カード(リンクやポートフォリオ)の背景 */
+    --pink: #ff4d9d;      /* ネオンピンク(メインカラー) */
+    --cyan: #29e5ff;      /* ネオンシアン(アクセント) */
+    --purple: #b57bff;    /* ネオンパープル(アクセント) */
+    --text: #f2f1f8;      /* 基本の文字色(ほぼ白) */
+    --muted: #8a87a3;     /* サブテキストの薄いグレー */
+    --line: #2b2a3d;      /* 枠線の色 */
   }
 
+  /* ==========================================================
+     ② リセットCSS
+     ブラウザごとに違うデフォルトの余白などを統一するおまじない
+  ========================================================== */
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; } /* アンカーリンクでスムーズにスクロール */
 
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow-x: hidden;
-    position: relative;
+    position: relative;   /* ::before(背景演出)を絶対配置するための基準 */
+    overflow-x: hidden;    /* 横スクロールが出ないようにする */
   }
 
-  /* ambient grid background */
+  /* ==========================================================
+     ③ 背景のふわふわ光るグラデーション演出
+     body::before は「bodyの前に疑似的な要素を1つ追加する」CSSの機能。
+     HTMLにタグを増やさずに装飾用の要素を作れるので便利。
+  ========================================================== */
   body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black 20%, transparent 75%);
-    opacity: 0.5;
-    z-index: 0;
+    content: "";           /* 疑似要素は content が無いと表示されない */
+    position: fixed;       /* 画面に固定してスクロールしても動かない */
+    inset: -20%;           /* 上下左右に-20%はみ出させて、動いた時に
+                               背景の端が見えないようにする余裕を持たせる */
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 77, 157, 0.10), transparent 45%),
+      radial-gradient(circle at 80% 30%, rgba(41, 229, 255, 0.10), transparent 45%),
+      radial-gradient(circle at 50% 80%, rgba(181, 123, 255, 0.10), transparent 45%);
+      /* 3色の淡い光を異なる位置に配置。数値0.10 = 透明度10%で控えめに */
+    animation: drift 18s ease-in-out infinite alternate;
+    z-index: 0; /* mainより奥(下)に表示するための重なり順 */
+  }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(2%, -2%) scale(1.05); } /* わずかに移動+拡大 */
   }
 
   main {
     position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 560px;
-    padding: 72px 24px 48px;
+    z-index: 1;             /* 背景(z-index:0)より手前に表示 */
+    max-width: 640px;        /* スマホでもPCでも読みやすい最大幅 */
+    margin: 0 auto;          /* 左右中央寄せ */
+    padding: 64px 24px 60px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: column;  /* 中身を縦に並べる */
+    align-items: center;     /* 中身を横方向の中央に寄せる */
   }
 
+  /* ==========================================================
+     ④ ヒーローエリア(ロゴ・タイトル・説明文)
+  ========================================================== */
   .avatar {
-    width: 104px;
-    height: 104px;
-    border-radius: 22px;
-    margin-bottom: 24px;
-    box-shadow: 0 0 0 1px var(--line), 0 0 44px -6px var(--pink), 0 0 44px -6px var(--cyan);
-    object-fit: cover;
+    width: 100px;
+    height: 100px;
+    border-radius: 24px; /* 角丸の四角形(円にしたい場合は50%にする) */
+    box-shadow:
+      0 0 0 1px var(--line),                         /* 細い縁取り */
+      0 0 36px -4px rgba(255, 77, 157, 0.55),          /* ピンクの光暈 */
+      0 0 36px -4px rgba(41, 229, 255, 0.35);          /* シアンの光暈 */
+    object-fit: cover; /* 画像の縦横比を保ったまま枠に収める */
+    animation: float 5s ease-in-out infinite; /* ふわふわ浮くアニメ */
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); } /* 上に6px移動して戻る */
+  }
+
+  .eyebrow {
+    /* ロゴの上の小さいラベル文字("Stream Overlay Shop") */
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em; /* 文字間を広げてラベルらしく見せる */
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-top: 22px;
   }
 
   h1 {
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
-    font-size: clamp(28px, 7vw, 40px);
-    letter-spacing: 0.04em;
-    text-align: center;
+    font-size: clamp(30px, 7vw, 42px);
+    /* clamp(最小, 画面幅に応じた可変値, 最大) でスマホ〜PCまで
+       文字サイズが自動調整される */
+    letter-spacing: 0.03em;
     color: #fff;
+    margin-top: 6px;
+    /* text-shadowを複数重ねてネオンの発光っぽさを表現 */
     text-shadow:
-      0 0 8px rgba(255, 46, 136, 0.7),
-      0 0 24px rgba(255, 46, 136, 0.4),
-      0 0 48px rgba(0, 229, 255, 0.15);
-    animation: flicker 6s ease-in-out infinite;
+      0 0 10px rgba(255, 77, 157, 0.65),
+      0 0 26px rgba(255, 77, 157, 0.3),
+      0 0 46px rgba(41, 229, 255, 0.18);
+    animation: flicker 7s ease-in-out infinite; /* ネオン管のチラつき */
   }
 
   @keyframes flicker {
+    /* 数字はアニメーション全体を100%とした時の時間位置。
+       ほとんどの時間は opacity:1(点灯)で、一瞬だけ暗くする
+       ことで「ジジッ」と揺らぐネオン管っぽさを再現している */
     0%, 92%, 100% { opacity: 1; }
-    93% { opacity: 0.6; }
-    94% { opacity: 1; }
-    95% { opacity: 0.75; }
-    96% { opacity: 1; }
+    93%   { opacity: 0.65; }
+    94%   { opacity: 1; }
+    95.5% { opacity: 0.8; }
+    96%   { opacity: 1; }
   }
 
+  /* 動きが苦手な人・省電力設定の人向けに、動きを希望しない
+     設定(prefers-reduced-motion)がONの場合はアニメーションを止める */
   @media (prefers-reduced-motion: reduce) {
-    h1 { animation: none; }
-  }
-
-  .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    color: var(--cyan);
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    h1, .avatar, body::before { animation: none; }
   }
 
   .tagline {
@@ -106,16 +155,19 @@
     font-size: 14.5px;
     text-align: center;
     margin-top: 14px;
-    max-width: 340px;
-    line-height: 1.6;
+    max-width: 360px; /* 横に広がりすぎて読みにくくならないよう制限 */
+    line-height: 1.7; /* 行間を広めにして読みやすく */
   }
 
-  nav {
+  /* ==========================================================
+     ⑤ リンクカード(BOOTH / ココナラ / X)
+  ========================================================== */
+  nav.links {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-top: 44px;
+    gap: 12px; /* カード同士の隙間 */
+    margin-top: 40px;
   }
 
   .link-card {
@@ -123,97 +175,153 @@
     align-items: center;
     gap: 16px;
     width: 100%;
-    padding: 18px 20px;
-    background: var(--bg-soft);
+    padding: 17px 20px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    text-decoration: none; /* aタグの下線を消す */
+    color: var(--text);
+    /* transitionでhover時の変化を滑らかにする(0.2秒かけて変化) */
+    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+
+  .link-card:hover, .link-card:focus-visible {
+    transform: translateY(-2px); /* ホバーで少し浮き上がる */
+    outline: none;
+  }
+
+  /* サイトごとに違う色でホバー時に光らせる */
+  .link-card.booth:hover,    .link-card.booth:focus-visible    { border-color: var(--pink);   box-shadow: 0 0 26px -6px var(--pink); }
+  .link-card.coconala:hover, .link-card.coconala:focus-visible { border-color: var(--cyan);   box-shadow: 0 0 26px -6px var(--cyan); }
+  .link-card.x:hover,        .link-card.x:focus-visible        { border-color: var(--purple); box-shadow: 0 0 26px -6px var(--purple); }
+
+  .icon-wrap {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0; /* 横幅が狭くなってもアイコンが潰れないようにする */
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .booth .icon-wrap    { background: rgba(255, 77, 157, 0.14); color: var(--pink); }
+  .coconala .icon-wrap { background: rgba(41, 229, 255, 0.14); color: var(--cyan); }
+  .x .icon-wrap        { background: rgba(181, 123, 255, 0.14); color: var(--purple); }
+
+  .icon-wrap svg { width: 22px; height: 22px; }
+
+  .link-text { flex: 1; } /* 残りの横幅いっぱいに広がる */
+  .link-title { font-weight: 600; font-size: 15.5px; }
+  .link-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .arrow { color: var(--muted); font-size: 18px; transition: transform 0.2s ease; }
+  .link-card:hover .arrow { transform: translateX(3px); } /* 矢印が右にちょっと動く */
+
+  /* ==========================================================
+     ⑥ セクション共通の見出しスタイル(Portfolio / Blog で共通利用)
+  ========================================================== */
+  section { width: 100%; margin-top: 64px; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline; /* 文字のベースラインを揃えて並べる */
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .section-head .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .section-head h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  /* ==========================================================
+     ⑦ ポートフォリオ:カードを2列グリッドで並べる
+  ========================================================== */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 均等幅で2列 */
+    gap: 12px;
+  }
+
+  .portfolio-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden; /* 角丸からはみ出た画像の角を隠す */
+
+    /* 最初は透明+少し下にずらしておき、画面に入ってきたら
+       JavaScript側で in-view クラスを付けてフェードインさせる */
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .portfolio-card.in-view { opacity: 1; transform: translateY(0); }
+
+  .portfolio-card:hover { border-color: var(--pink); box-shadow: 0 0 22px -8px var(--pink); }
+
+  .portfolio-thumb {
+    width: 100%;
+    aspect-ratio: 4 / 3; /* 画像枠の縦横比を固定(写真がなくても形が崩れない) */
+    background: linear-gradient(135deg, rgba(255,77,157,0.18), rgba(41,229,255,0.18));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .portfolio-info { padding: 12px 14px 14px; }
+  .portfolio-info .p-title { font-size: 13.5px; font-weight: 600; }
+  .portfolio-info .p-tag { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+  /* ==========================================================
+     ⑧ ブログ:1行リスト形式
+  ========================================================== */
+  .blog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .blog-item {
+    display: flex;
+    justify-content: space-between; /* タイトルと日付を両端に配置 */
+    align-items: center;
+    gap: 12px;
+    padding: 15px 18px;
+    background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
     text-decoration: none;
     color: var(--text);
-    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease;
   }
 
-  .link-card:hover,
-  .link-card:focus-visible {
-    transform: translateY(-2px);
-    outline: none;
-  }
+  .blog-item.in-view { opacity: 1; transform: translateY(0); }
+  .blog-item:hover { border-color: var(--cyan); }
 
-  .link-card.booth:hover, .link-card.booth:focus-visible {
-    border-color: var(--pink);
-    box-shadow: 0 0 24px -6px var(--pink);
-  }
-  .link-card.coconala:hover, .link-card.coconala:focus-visible {
-    border-color: var(--cyan);
-    box-shadow: 0 0 24px -6px var(--cyan);
-  }
-  .link-card.x:hover, .link-card.x:focus-visible {
-    border-color: var(--purple);
-    box-shadow: 0 0 24px -6px var(--purple);
-  }
-
-  .icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 500;
-    font-size: 13px;
-  }
-
-  .booth .icon { background: rgba(255, 46, 136, 0.12); color: var(--pink); }
-  .coconala .icon { background: rgba(0, 229, 255, 0.12); color: var(--cyan); }
-  .x .icon { background: rgba(168, 85, 247, 0.12); color: var(--purple); }
-
-  .link-text { flex: 1; }
-
-  .link-title {
-    font-weight: 600;
-    font-size: 15.5px;
-  }
-
-  .link-sub {
-    color: var(--muted);
-    font-size: 12.5px;
-    margin-top: 2px;
-  }
-
-  .arrow {
-    color: var(--muted);
-    font-size: 18px;
-  }
-
-  section.strip {
-    width: 100%;
-    margin-top: 56px;
-  }
-
-  .strip-label {
+  .blog-item .b-title { font-size: 14px; font-weight: 500; }
+  .blog-item .b-date {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 0.12em;
     color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .swatches {
-    display: flex;
-    gap: 8px;
-  }
-
-  .swatch {
-    flex: 1;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid var(--line);
+    white-space: nowrap; /* 日付が折り返さないようにする */
   }
 
   footer {
-    margin-top: 64px;
+    margin-top: 60px;
     color: var(--muted);
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -224,23 +332,55 @@
 </head>
 <body>
 <main>
+
+  <!-- ==========================================================
+       ヒーローエリア(ロゴ画像・ショップ名・説明文)
+  =========================================================== -->
   <img class="avatar" src="cap-design-icon.png" alt="Cap Design ロゴ">
   <p class="eyebrow">Stream Overlay Shop</p>
   <h1>Cap Design</h1>
   <p class="tagline">配信用ネオンオーバーレイ素材の制作・販売。既製セットはBOOTH、オーダーメイドはココナラで承っています。</p>
 
-  <nav>
+  <!-- ==========================================================
+       リンクカード(BOOTH / ココナラ / X)
+
+       アイコンについて:
+       公式のロゴ画像(BOOTHのロゴ、ココナラのロゴ等)は商標・著作物
+       にあたるため無断使用を避け、代わりに「Lucide Icons」という
+       完全無料・商用利用OK(ISCライセンス)の汎用アイコンセットの
+       SVGコードをそのまま埋め込んでいます。
+       ブランドロゴではなく「買い物袋」「吹き出し」「@マーク」
+       といった意味の近い一般的な記号にしているので、著作権の
+       心配なくそのまま使えます。
+  =========================================================== -->
+  <nav class="links">
+
+    <!-- BOOTHへのリンクカード -->
     <a class="link-card booth" href="https://booth.pm/" target="_blank" rel="noopener">
-      <div class="icon">BTH</div>
+      <div class="icon-wrap">
+        <!-- Lucide "shopping-bag"(買い物袋)アイコン -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+          <path d="M3 6h18"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
       <div class="link-text">
         <div class="link-title">BOOTH — 既製素材を見る</div>
-        <div class="link-sub">開始・終了・待機画面/五色バリエーション</div>
+        <div class="link-sub">開始・終了・待機画面などの配信素材</div>
       </div>
       <div class="arrow">→</div>
     </a>
 
+    <!-- ココナラへのリンクカード -->
     <a class="link-card coconala" href="https://coconala.com/" target="_blank" rel="noopener">
-      <div class="icon">ココ</div>
+      <div class="icon-wrap">
+        <!-- Lucide "message-square"(吹き出し)アイコン。依頼・相談のイメージ -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>
+          <path d="M8 10h.01M12 10h.01M16 10h.01"/>
+        </svg>
+      </div>
       <div class="link-text">
         <div class="link-title">ココナラ — オーダーメイド依頼</div>
         <div class="link-sub">配信者ごとのカスタムデザインを制作</div>
@@ -248,8 +388,16 @@
       <div class="arrow">→</div>
     </a>
 
+    <!-- Xへのリンクカード -->
     <a class="link-card x" href="https://x.com/" target="_blank" rel="noopener">
-      <div class="icon">X</div>
+      <div class="icon-wrap">
+        <!-- Lucide "at-sign"(@マーク)アイコン。X公式ロゴではなく
+             汎用的な「アカウント・SNS」を示す記号として使用 -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-5.5 8.28"/>
+        </svg>
+      </div>
       <div class="link-text">
         <div class="link-title">X（Twitter）— 最新作をチェック</div>
         <div class="link-sub">新作の告知・無料配布情報</div>
@@ -258,18 +406,100 @@
     </a>
   </nav>
 
-  <section class="strip">
-    <p class="strip-label">Color Lineup</p>
-    <div class="swatches">
-      <div class="swatch" style="background:#ff2e88"></div>
-      <div class="swatch" style="background:#00e5ff"></div>
-      <div class="swatch" style="background:#a855f7"></div>
-      <div class="swatch" style="background:#39ff6a"></div>
-      <div class="swatch" style="background:#ffe93b"></div>
-    </div>
+  <!-- ==========================================================
+       ポートフォリオセクション
+       中身は空にしてあり、下部の<script>内の
+       portfolioItems 配列からJavaScriptが自動生成します。
+       → 作品を増やしたい時はHTMLを触らず、配列に1行足すだけでOK
+  =========================================================== -->
+  <section id="portfolio">
+    <div class="section-head"><span class="num">01</span><h2>Portfolio</h2></div>
+    <div class="portfolio-grid" id="portfolio-grid"></div>
+  </section>
+
+  <!-- ==========================================================
+       ブログセクション
+       同じ仕組みで blogItems 配列から自動生成
+  =========================================================== -->
+  <section id="blog">
+    <div class="section-head"><span class="num">02</span><h2>Blog</h2></div>
+    <div class="blog-list" id="blog-list"></div>
   </section>
 
   <footer>© 2026 Cap Design</footer>
 </main>
+
+<script>
+  /* ============================================================
+     ここから下がJavaScript。
+     「HTMLを直接いじらなくても配列に追加するだけでカードが増える」
+     仕組みにしてあるので、今後の運用がラクになる。
+  ============================================================ */
+
+  // ---- ① ポートフォリオのデータ ----
+  // title: 作品名 / tag: カテゴリなどの短い説明
+  // 新しい作品を追加したい時は、下に { title: "...", tag: "..." }, を
+  // 1行コピペして書き換えるだけでOK
+  const portfolioItems = [
+    { title: "ネオンピンク 配信開始画面", tag: "Overlay / Neon" },
+    { title: "五色バリエーション待機画面", tag: "Overlay / Set" },
+    { title: "和風モチーフ フルセット",     tag: "Overlay / Japanese" },
+    { title: "配信レイアウト枠",           tag: "Layout Frame" },
+  ];
+
+  // ---- ② ブログのデータ ----
+  // title: 記事タイトル / date: 表示用の日付 / url: 記事へのリンク先
+  const blogItems = [
+    { title: "Cap Designはじめました",   date: "2026.07", url: "#" },
+    { title: "五色セットの制作裏話",     date: "2026.07", url: "#" },
+  ];
+
+  // ---- ③ ポートフォリオを画面に描画する処理 ----
+  // getElementById: HTML内の id="portfolio-grid" の要素を取得
+  const grid = document.getElementById("portfolio-grid");
+
+  // forEach: 配列の中身を1件ずつ順番に処理するループ
+  portfolioItems.forEach(item => {
+    const card = document.createElement("div"); // 空のdivを新規作成
+    card.className = "portfolio-card";           // CSSのクラスを付与
+    // innerHTMLで中身のHTMLをまとめて流し込む(テンプレートリテラル ` ` を使用)
+    card.innerHTML = `
+      <div class="portfolio-thumb">PREVIEW</div>
+      <div class="portfolio-info">
+        <div class="p-title">${item.title}</div>
+        <div class="p-tag">${item.tag}</div>
+      </div>`;
+    grid.appendChild(card); // 作ったカードを画面に追加
+  });
+
+  // ---- ④ ブログ一覧を画面に描画する処理(ポートフォリオと同じ考え方) ----
+  const list = document.getElementById("blog-list");
+  blogItems.forEach(item => {
+    const a = document.createElement("a"); // リンクにしたいのでaタグを作成
+    a.className = "blog-item";
+    a.href = item.url;
+    a.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
+    list.appendChild(a);
+  });
+
+  /* ============================================================
+     ⑤ スクロールで画面に入ってきたらフワッと表示させる処理
+     IntersectionObserver = 「要素が画面内に入ったかどうか」を
+     監視してくれるブラウザ標準の機能。
+     スクロールイベントを自分で計算するより軽くて簡単。
+  ============================================================ */
+  const observer = new IntersectionObserver((entries) => {
+    // entries には「監視している要素たちの現在の状態」が入ってくる
+    entries.forEach(e => {
+      if (e.isIntersecting) {       // 画面内に入ったかどうかの判定
+        e.target.classList.add("in-view"); // CSSのin-viewクラスを付与
+                                            // → CSS側のtransitionでフェードイン
+      }
+    });
+  }, { threshold: 0.15 }); // 要素の15%が見えたタイミングで発火する設定
+
+  // ポートフォリオカードとブログ項目、全部まとめて監視対象に登録
+  document.querySelectorAll(".portfolio-card, .blog-item").forEach(el => observer.observe(el));
+</script>
 </body>
 </html>
