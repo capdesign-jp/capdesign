@@ -429,61 +429,120 @@
   <footer>© 2026 Cap Design</footer>
 </main>
 
+<!--
+  PapaParse: CSVファイルをJavaScriptで扱いやすい形(配列)に変換して
+  くれる無料ライブラリ(MITライセンス・商用利用OK)。
+  Googleスプレッドシートを「ウェブに公開」した時に発行されるCSVの
+  URLを読み込むために使用する。
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
 <script>
   /* ============================================================
-     ここから下がJavaScript。
-     「HTMLを直接いじらなくても配列に追加するだけでカードが増える」
-     仕組みにしてあるので、今後の運用がラクになる。
-  ============================================================ */
+     ============ ここだけ書き換えればOK ============
+     Googleスプレッドシートを「ファイル→共有→ウェブに公開」した際に
+     発行される、CSV形式のURLをここに貼り付ける。
 
-  // ---- ① ポートフォリオのデータ ----
-  // title: 作品名 / tag: カテゴリなどの短い説明
-  // 新しい作品を追加したい時は、下に { title: "...", tag: "..." }, を
-  // 1行コピペして書き換えるだけでOK
-  const portfolioItems = [
+     スプレッドシートの列の並び順(フォームの質問順と同じ):
+     A列: タイムスタンプ(自動)
+     B列: 種類    → "ポートフォリオ" または "ブログ"
+     C列: タイトル
+     D列: サブ情報(カテゴリ or 日付)
+     E列: URL(任意)
+  ============================================================ */
+  const SHEET_CSV_URL = "ここにスプレッドシートのCSV公開URLを貼る";
+
+  // 初期表示用のダミーデータ(スプレッドシート未接続の間、見た目確認用)
+  const fallbackPortfolio = [
     { title: "ネオンピンク 配信開始画面", tag: "Overlay / Neon" },
     { title: "五色バリエーション待機画面", tag: "Overlay / Set" },
-    { title: "和風モチーフ フルセット",     tag: "Overlay / Japanese" },
-    { title: "配信レイアウト枠",           tag: "Layout Frame" },
+  ];
+  const fallbackBlog = [
+    { title: "Cap Designはじめました", date: "2026.07", url: "#" },
   ];
 
-  // ---- ② ブログのデータ ----
-  // title: 記事タイトル / date: 表示用の日付 / url: 記事へのリンク先
-  const blogItems = [
-    { title: "Cap Designはじめました",   date: "2026.07", url: "#" },
-    { title: "五色セットの制作裏話",     date: "2026.07", url: "#" },
-  ];
+  // ---- ポートフォリオを画面に描画する処理 ----
+  function renderPortfolio(items) {
+    const grid = document.getElementById("portfolio-grid");
+    grid.innerHTML = ""; // 前回分をクリアしてから描画し直す
+    items.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "portfolio-card";
+      card.innerHTML = `
+        <div class="portfolio-thumb">PREVIEW</div>
+        <div class="portfolio-info">
+          <div class="p-title">${item.title}</div>
+          <div class="p-tag">${item.tag}</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
 
-  // ---- ③ ポートフォリオを画面に描画する処理 ----
-  // getElementById: HTML内の id="portfolio-grid" の要素を取得
-  const grid = document.getElementById("portfolio-grid");
-
-  // forEach: 配列の中身を1件ずつ順番に処理するループ
-  portfolioItems.forEach(item => {
-    const card = document.createElement("div"); // 空のdivを新規作成
-    card.className = "portfolio-card";           // CSSのクラスを付与
-    // innerHTMLで中身のHTMLをまとめて流し込む(テンプレートリテラル ` ` を使用)
-    card.innerHTML = `
-      <div class="portfolio-thumb">PREVIEW</div>
-      <div class="portfolio-info">
-        <div class="p-title">${item.title}</div>
-        <div class="p-tag">${item.tag}</div>
-      </div>`;
-    grid.appendChild(card); // 作ったカードを画面に追加
-  });
-
-  // ---- ④ ブログ一覧を画面に描画する処理(ポートフォリオと同じ考え方) ----
-  const list = document.getElementById("blog-list");
-  blogItems.forEach(item => {
-    const a = document.createElement("a"); // リンクにしたいのでaタグを作成
-    a.className = "blog-item";
-    a.href = item.url;
-    a.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
-    list.appendChild(a);
-  });
+  // ---- ブログ一覧を画面に描画する処理 ----
+  function renderBlog(items) {
+    const list = document.getElementById("blog-list");
+    list.innerHTML = "";
+    items.forEach(item => {
+      const a = document.createElement("a");
+      a.className = "blog-item";
+      a.href = item.url || "#";
+      a.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
+      list.appendChild(a);
+    });
+  }
 
   /* ============================================================
-     ⑤ スクロールで画面に入ってきたらフワッと表示させる処理
+     スプレッドシート(CSV)を取得して、種類ごとに振り分ける処理
+
+     fetch()  : 指定したURLの中身を取ってくるブラウザ標準の機能
+     Papa.parse: 取ってきたCSVの文字列を、行ごとの配列に変換する
+     header:true にすると、1行目(見出し行)をキー名として
+     { タイムスタンプ: ..., 種類: ..., タイトル: ... } のような
+     扱いやすいオブジェクトの配列にしてくれる
+  ============================================================ */
+  async function loadFromSheet() {
+    // URLがまだ書き換えられていない場合はダミーデータのまま表示して終了
+    if (SHEET_CSV_URL.startsWith("ここに")) {
+      renderPortfolio(fallbackPortfolio);
+      renderBlog(fallbackBlog);
+      return;
+    }
+
+    try {
+      const res = await fetch(SHEET_CSV_URL);
+      const csvText = await res.text();
+
+      const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+      const rows = parsed.data; // 1行=1件のオブジェクトが入った配列
+
+      // rows は列見出し(フォームの質問文)がキー名になるので、
+      // 実際のフォームの質問文と完全に一致させる必要がある。
+      // ここでは "種類" "タイトル" "サブ情報" "URL" という質問文を想定。
+      const portfolio = rows
+        .filter(r => r["種類"] === "ポートフォリオ")
+        .map(r => ({ title: r["タイトル"], tag: r["サブ情報"] }));
+
+      const blog = rows
+        .filter(r => r["種類"] === "ブログ")
+        .map(r => ({ title: r["タイトル"], date: r["サブ情報"], url: r["URL"] }));
+
+      // データが1件も取れなかった場合は念のためダミー表示にフォールバック
+      renderPortfolio(portfolio.length ? portfolio : fallbackPortfolio);
+      renderBlog(blog.length ? blog : fallbackBlog);
+
+    } catch (err) {
+      // 通信エラー時もサイトが真っ白にならないよう、ダミーデータを表示
+      console.error("スプレッドシートの読み込みに失敗:", err);
+      renderPortfolio(fallbackPortfolio);
+      renderBlog(fallbackBlog);
+    }
+
+    // 描画し終わったカードを、スクロール出現アニメーションの監視対象に登録
+    document.querySelectorAll(".portfolio-card, .blog-item").forEach(el => observer.observe(el));
+  }
+
+  /* ============================================================
+     スクロールで画面に入ってきたらフワッと表示させる処理
      IntersectionObserver = 「要素が画面内に入ったかどうか」を
      監視してくれるブラウザ標準の機能。
      スクロールイベントを自分で計算するより軽くて簡単。
@@ -498,8 +557,8 @@
     });
   }, { threshold: 0.15 }); // 要素の15%が見えたタイミングで発火する設定
 
-  // ポートフォリオカードとブログ項目、全部まとめて監視対象に登録
-  document.querySelectorAll(".portfolio-card, .blog-item").forEach(el => observer.observe(el));
+  // ページを開いたタイミングでスプレッドシートからデータを読み込む
+  loadFromSheet();
 </script>
 </body>
 </html>
