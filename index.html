@@ -585,13 +585,22 @@
   ============================================================ */
   function toDirectImageUrl(url) {
     if (!url) return "";
-    // /d/ と /view の間にある文字列(ファイルID)を抜き出す
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+    // パターン1: https://drive.google.com/file/d/【ID】/view の形式
+    let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+    // パターン2: https://drive.google.com/open?id=【ID】 や
+    //           https://drive.google.com/uc?id=【ID】 のような
+    //           クエリパラメータ形式(見つからなかった場合のみ試す)
+    if (!match) {
+      match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    }
+
     if (match) {
       const fileId = match[1];
       return `https://drive.google.com/uc?export=view&id=${fileId}`;
     }
-    return url; // Drive形式でなければそのまま使う
+    return url; // どちらのパターンにも一致しなければそのまま使う
   }
 
   // ---- ポートフォリオを画面に描画する処理 ----
@@ -607,7 +616,7 @@
       // 画像URLがある場合は<img>タグ、無い場合は今まで通りの
       // グラデーションのプレースホルダーを表示する
       const thumbHtml = imageUrl
-        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${item.title}" loading="lazy">`
+        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.outerHTML='<div class=&quot;portfolio-thumb&quot;>PREVIEW</div>'">`
         : `<div class="portfolio-thumb">PREVIEW</div>`;
 
       card.innerHTML = `
