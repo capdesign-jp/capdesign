@@ -7,6 +7,26 @@
 <link rel="icon" href="cap-design-icon.png">
 
 <!-- ==========================================================
+     セキュリティ対策:CSP(Content-Security-Policy)
+     「このページが読み込んでいいスクリプト・スタイル・画像等の
+     出どころ」をブラウザに明示的に制限させる設定。
+     万が一XSSでスクリプトを注入されても、許可していない外部への
+     データ送信や不正なスクリプト実行をブラウザ側でブロックできる。
+========================================================== -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src https://fonts.gstatic.com;
+  img-src 'self' https://drive.google.com https://*.googleusercontent.com data:;
+  connect-src 'self' https://docs.google.com;
+  object-src 'none';
+  base-uri 'self';
+  frame-ancestors 'none';
+">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<!-- ==========================================================
      Googleフォントの読み込み
      Orbitron   : ロゴ・見出し用の近未来的なフォント
      Inter      : 本文用の読みやすいフォント
@@ -557,6 +577,11 @@
      F列: 画像(任意・フォームの「ファイルのアップロード」で送信された
           Googleドライブのリンクが自動的に入る。コード側で表示用URLに
           自動変換するので、そのままで問題ない)
+     G列: 承認(★手動で追加する列。フォームの質問には含めない★)
+          この列に "OK" と入力した行だけがサイトに表示される。
+          何も投稿されていない行はサイトに表示されない仕組みなので、
+          誰かにフォームを荒らされても、あなたが承認しない限り
+          サイトには何も反映されない(最も安全な方式)。
   ============================================================ */
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-DALbevF8dqxKviQiATeySp1j_OAP50wYzNUierpu9-qtdVXrgzpPctZqdaH2Uk4C9s1zFLNHsIRE/pub?gid=1282257801&single=true&output=csv";
 
@@ -607,6 +632,26 @@
     return url; // どちらのパターンにも一致しなければそのまま使う
   }
 
+  /* ============================================================
+     セキュリティ対策:HTMLエスケープ関数
+
+     スプレッドシート由来のテキスト(タイトル・サブ情報など)を
+     innerHTMLでそのまま挿入すると、もし中に <script> のような
+     タグが含まれていた場合、訪問者のブラウザでそのまま実行されて
+     しまう(XSS脆弱性)。
+     この関数は < > & " ' などの記号を無害な文字参照に変換し、
+     「ただの文字列」として表示されるようにする。
+  ============================================================ */
+  function escapeHtml(str) {
+    if (str === undefined || str === null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   // ---- ポートフォリオを画面に描画する処理 ----
   function renderPortfolio(items) {
     const grid = document.getElementById("portfolio-grid");
@@ -616,18 +661,20 @@
       card.className = "portfolio-card";
 
       const imageUrl = toDirectImageUrl(item.image);
+      const safeTitle = escapeHtml(item.title);
+      const safeTag = escapeHtml(item.tag);
 
       // 画像URLがある場合は<img>タグ、無い場合は今まで通りの
       // グラデーションのプレースホルダーを表示する
       const thumbHtml = imageUrl
-        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${item.title}" loading="lazy" onerror="this.outerHTML='<div class=&quot;portfolio-thumb&quot;>PREVIEW</div>'">`
+        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${safeTitle}" loading="lazy" onerror="this.outerHTML='<div class=&quot;portfolio-thumb&quot;>PREVIEW</div>'">`
         : `<div class="portfolio-thumb">PREVIEW</div>`;
 
       card.innerHTML = `
         ${thumbHtml}
         <div class="portfolio-info">
-          <div class="p-title">${item.title}</div>
-          <div class="p-tag">${item.tag}</div>
+          <div class="p-title">${safeTitle}</div>
+          <div class="p-tag">${safeTag}</div>
         </div>`;
       grid.appendChild(card);
     });
@@ -643,7 +690,7 @@
       const btn = document.createElement("button");
       btn.className = "blog-item";
       btn.type = "button";
-      btn.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
+      btn.innerHTML = `<span class="b-title">${escapeHtml(item.title)}</span><span class="b-date">${escapeHtml(item.date)}</span>`;
       // クリックされたら、このitemの情報でモーダルを開く
       btn.addEventListener("click", () => openBlogModal(item));
       list.appendChild(btn);
@@ -704,11 +751,24 @@
       // 実際のフォームの質問文と完全に一致させる必要がある。
       // ここでは "種類" "タイトル" "サブ情報" "本文" "画像" という
       // 質問文を想定。
-      const portfolio = rows
+
+      // ---- 承認ゲート(最も重要なセキュリティ処理) ----
+      // "承認" 列が "OK" になっている行だけを対象にする。
+      // これにより、誰かがフォームを荒らしても、あなたが手動で
+      // スプレッドシートに "OK" と書き込まない限り、
+      // その投稿は絶対にサイトに表示されない。
+      // trim() で前後の余計な空白を除去し、大文字小文字を無視して
+      // 比較することで、入力ミスにもある程度強くしている。
+      const approved = rows.filter(r => {
+        const flag = (r["承認"] || "").toString().trim().toUpperCase();
+        return flag === "OK";
+      });
+
+      const portfolio = approved
         .filter(r => r["種類"] === "ポートフォリオ")
         .map(r => ({ title: r["タイトル"], tag: r["サブ情報"], image: r["画像"] }));
 
-      const blog = rows
+      const blog = approved
         .filter(r => r["種類"] === "ブログ")
         .map(r => ({ title: r["タイトル"], date: r["サブ情報"], body: r["本文"] }));
 
