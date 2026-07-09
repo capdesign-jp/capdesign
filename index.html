@@ -598,7 +598,11 @@
 
     if (match) {
       const fileId = match[1];
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      // 以前は uc?export=view&id=... という形式を使っていたが、
+      // Google側の仕様変更でこの形式は外部サイトへの埋め込み表示が
+      // 不安定になっている。代わりに thumbnail エンドポイント
+      // (sz=w1000で幅1000pxの画像を取得)を使う方が確実に表示される。
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
     }
     return url; // どちらのパターンにも一致しなければそのまま使う
   }
