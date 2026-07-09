@@ -271,8 +271,9 @@
   .portfolio-thumb {
     width: 100%;
     aspect-ratio: 4 / 3; /* 画像枠の縦横比を固定(写真がなくても形が崩れない) */
-    background: linear-gradient(135deg, rgba(255,77,157,0.18), rgba(41,229,255,0.18));
     display: flex;
+    object-fit: cover; /* <img>の場合、縦横比を保ったまま枠を埋める */
+    background: linear-gradient(135deg, rgba(255,77,157,0.18), rgba(41,229,255,0.18));
     align-items: center;
     justify-content: center;
     color: var(--muted);
@@ -298,12 +299,16 @@
     justify-content: space-between; /* タイトルと日付を両端に配置 */
     align-items: center;
     gap: 12px;
+    width: 100%;
     padding: 15px 18px;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
     text-decoration: none;
     color: var(--text);
+    font-family: inherit; /* <button>はデフォルトで違うフォントになるため明示的に指定 */
+    text-align: left;
+    cursor: pointer;
     opacity: 0;
     transform: translateY(16px);
     transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease;
@@ -327,6 +332,90 @@
     font-size: 11px;
     letter-spacing: 0.06em;
     text-align: center;
+  }
+
+  /* ==========================================================
+     ⑨ ブログ本文モーダル
+     position: fixed の半透明の黒い背景の上に、記事本文を
+     カード状に重ねて表示する定番の「モーダル」パターン
+  ========================================================== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0; /* 画面全体を覆う(top/right/bottom/left全部0) */
+    background: rgba(8, 8, 13, 0.82);
+    backdrop-filter: blur(3px); /* 背景を少しぼかして奥行きを出す */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 20px;
+    overflow-y: auto; /* 本文が長い場合はモーダルごとスクロール */
+    z-index: 50;
+
+    /* 初期状態は非表示。JSで .open を付け外しして切り替える */
+    opacity: 0;
+    pointer-events: none; /* 非表示時はクリックを透過させる */
+    transition: opacity 0.25s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 40px 28px 32px;
+    box-shadow: 0 0 40px -8px rgba(41, 229, 255, 0.25);
+
+    /* モーダルが開く時、少し下からふわっと現れる動き */
+    transform: translateY(12px);
+    transition: transform 0.25s ease;
+  }
+
+  .modal-overlay.open .modal-box { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .modal-close:hover { color: var(--pink); border-color: var(--pink); }
+
+  .modal-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+  }
+
+  .modal-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 19px;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .modal-body {
+    margin-top: 18px;
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: var(--text);
+    white-space: pre-wrap; /* フォームで入力した改行をそのまま反映させる */
   }
 </style>
 </head>
@@ -429,6 +518,21 @@
   <footer>© 2026 Cap Design</footer>
 </main>
 
+<!-- ==========================================================
+     ブログ本文モーダル(ポップアップ)
+     ブログ項目をタップすると、外部リンクに飛ばずに
+     このモーダルの中に本文がその場で表示される。
+     普段は非表示(.open クラスが付いた時だけ表示)。
+=========================================================== -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close" aria-label="閉じる">✕</button>
+    <p class="modal-date" id="modal-date"></p>
+    <h3 class="modal-title" id="modal-title"></h3>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
 <!--
   PapaParse: CSVファイルをJavaScriptで扱いやすい形(配列)に変換して
   くれる無料ライブラリ(MITライセンス・商用利用OK)。
@@ -448,18 +552,46 @@
      B列: 種類    → "ポートフォリオ" または "ブログ"
      C列: タイトル
      D列: サブ情報(カテゴリ or 日付)
-     E列: URL(任意)
+     E列: 本文(ブログの時だけ記事の中身を書く。ポートフォリオは空欄でOK)
+     F列: 画像(任意・フォームの「ファイルのアップロード」で送信された
+          Googleドライブのリンクが自動的に入る。コード側で表示用URLに
+          自動変換するので、そのままで問題ない)
   ============================================================ */
   const SHEET_CSV_URL = "ここにスプレッドシートのCSV公開URLを貼る";
 
   // 初期表示用のダミーデータ(スプレッドシート未接続の間、見た目確認用)
   const fallbackPortfolio = [
-    { title: "ネオンピンク 配信開始画面", tag: "Overlay / Neon" },
-    { title: "五色バリエーション待機画面", tag: "Overlay / Set" },
+    { title: "ネオンピンク 配信開始画面", tag: "Overlay / Neon", image: "" },
+    { title: "五色バリエーション待機画面", tag: "Overlay / Set", image: "" },
   ];
   const fallbackBlog = [
-    { title: "Cap Designはじめました", date: "2026.07", url: "#" },
+    { title: "Cap Designはじめました", date: "2026.07", body: "配信用ネオンオーバーレイのショップ、Cap Designをはじめました。少しずつ作品を増やしていきます。" },
   ];
+
+  /* ============================================================
+     Googleドライブの共有リンクを、<img>で直接表示できる形式に
+     自動変換する関数。
+
+     Googleフォームの「ファイルのアップロード」で送信された画像は、
+     スプレッドシートに以下のような形式のリンクとして入ってくる:
+       https://drive.google.com/file/d/【ここがファイルID】/view?usp=drivesdk
+     このままでは画像として表示できないため、正規表現でファイルID
+     部分だけを取り出し、直接表示用のURL形式に組み替えている:
+       https://drive.google.com/uc?export=view&id=【ファイルID】
+
+     Drive以外のURL(Imgurや相対パスなど)がそのまま入っていた場合は
+     何も変換せずそのまま返す。
+  ============================================================ */
+  function toDirectImageUrl(url) {
+    if (!url) return "";
+    // /d/ と /view の間にある文字列(ファイルID)を抜き出す
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+      const fileId = match[1];
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    return url; // Drive形式でなければそのまま使う
+  }
 
   // ---- ポートフォリオを画面に描画する処理 ----
   function renderPortfolio(items) {
@@ -468,8 +600,17 @@
     items.forEach(item => {
       const card = document.createElement("div");
       card.className = "portfolio-card";
+
+      const imageUrl = toDirectImageUrl(item.image);
+
+      // 画像URLがある場合は<img>タグ、無い場合は今まで通りの
+      // グラデーションのプレースホルダーを表示する
+      const thumbHtml = imageUrl
+        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${item.title}" loading="lazy">`
+        : `<div class="portfolio-thumb">PREVIEW</div>`;
+
       card.innerHTML = `
-        <div class="portfolio-thumb">PREVIEW</div>
+        ${thumbHtml}
         <div class="portfolio-info">
           <div class="p-title">${item.title}</div>
           <div class="p-tag">${item.tag}</div>
@@ -479,17 +620,47 @@
   }
 
   // ---- ブログ一覧を画面に描画する処理 ----
+  // 外部リンクではなく、クリックするとその場でモーダルが開く仕組みに変更
   function renderBlog(items) {
     const list = document.getElementById("blog-list");
     list.innerHTML = "";
     items.forEach(item => {
-      const a = document.createElement("a");
-      a.className = "blog-item";
-      a.href = item.url || "#";
-      a.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
-      list.appendChild(a);
+      // <a>ではなく<button>にすることで、ページ移動をせずクリックだけ拾う
+      const btn = document.createElement("button");
+      btn.className = "blog-item";
+      btn.type = "button";
+      btn.innerHTML = `<span class="b-title">${item.title}</span><span class="b-date">${item.date}</span>`;
+      // クリックされたら、このitemの情報でモーダルを開く
+      btn.addEventListener("click", () => openBlogModal(item));
+      list.appendChild(btn);
     });
   }
+
+  // ---- ブログ本文モーダルを開く処理 ----
+  function openBlogModal(item) {
+    document.getElementById("modal-title").textContent = item.title;
+    document.getElementById("modal-date").textContent = item.date;
+    document.getElementById("modal-body").textContent = item.body || "";
+    document.getElementById("modal-overlay").classList.add("open");
+    document.body.style.overflow = "hidden"; // モーダル表示中は背景のスクロールを止める
+  }
+
+  // ---- ブログ本文モーダルを閉じる処理 ----
+  function closeBlogModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+    document.body.style.overflow = ""; // 背景のスクロールを元に戻す
+  }
+
+  // ✕ボタンをクリックしたら閉じる
+  document.getElementById("modal-close").addEventListener("click", closeBlogModal);
+  // 黒い背景部分(オーバーレイ自身)をクリックしても閉じる
+  document.getElementById("modal-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "modal-overlay") closeBlogModal();
+  });
+  // キーボードのEscキーでも閉じられるようにする(PC操作向け)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeBlogModal();
+  });
 
   /* ============================================================
      スプレッドシート(CSV)を取得して、種類ごとに振り分ける処理
@@ -517,14 +688,15 @@
 
       // rows は列見出し(フォームの質問文)がキー名になるので、
       // 実際のフォームの質問文と完全に一致させる必要がある。
-      // ここでは "種類" "タイトル" "サブ情報" "URL" という質問文を想定。
+      // ここでは "種類" "タイトル" "サブ情報" "本文" "画像" という
+      // 質問文を想定。
       const portfolio = rows
         .filter(r => r["種類"] === "ポートフォリオ")
-        .map(r => ({ title: r["タイトル"], tag: r["サブ情報"] }));
+        .map(r => ({ title: r["タイトル"], tag: r["サブ情報"], image: r["画像"] }));
 
       const blog = rows
         .filter(r => r["種類"] === "ブログ")
-        .map(r => ({ title: r["タイトル"], date: r["サブ情報"], url: r["URL"] }));
+        .map(r => ({ title: r["タイトル"], date: r["サブ情報"], body: r["本文"] }));
 
       // データが1件も取れなかった場合は念のためダミー表示にフォールバック
       renderPortfolio(portfolio.length ? portfolio : fallbackPortfolio);
