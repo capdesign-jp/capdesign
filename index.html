@@ -9,14 +9,16 @@
 <!-- セキュリティ対策: CSP(Content-Security-Policy)
      このページが読み込んでよいスクリプト・スタイル・画像・通信先を制限。
      PapaParse(cdnjs)・Googleフォント・Googleドライブ画像・
-     スプレッドシートCSV(docs.google.com)のみ許可しています。 -->
+     スプレッドシートCSV(docs.google.com)・X公式埋め込みウィジェット
+     (platform.twitter.com)のみ許可しています。 -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+  script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://platform.twitter.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src https://fonts.gstatic.com;
-  img-src 'self' https://drive.google.com https://*.googleusercontent.com data:;
-  connect-src 'self' https://docs.google.com https://*.googleusercontent.com;
+  img-src 'self' https://drive.google.com https://*.googleusercontent.com https://pbs.twimg.com https://abs.twimg.com data:;
+  frame-src https://platform.twitter.com https://syndication.twitter.com;
+  connect-src 'self' https://docs.google.com https://*.googleusercontent.com https://syndication.twitter.com https://cdn.syndication.twimg.com;
   object-src 'none';
   base-uri 'self';
 ">
@@ -127,6 +129,8 @@
   @keyframes hue-shift{ to{background-position:200% center;} }
   .hero p{margin-top:24px;max-width:44ch;color:var(--text-dim);font-size:1.02rem;}
   .cta-row{display:flex;flex-wrap:wrap;gap:16px;margin-top:40px;}
+  .external-note{display:block;margin-top:8px;font-family:"JetBrains Mono",monospace;font-size:.7rem;
+    color:var(--text-dimmer);letter-spacing:.04em;}
 
   /* ---------- section shell ---------- */
   section{position:relative;padding:96px 0;border-bottom:1px solid var(--line);}
@@ -235,6 +239,13 @@
   .copyright{margin-top:36px;font-size:.76rem;color:var(--text-dimmer);font-family:"JetBrains Mono",monospace;}
   .hashtags{margin-top:14px;font-family:"JetBrains Mono",monospace;font-size:.74rem;color:var(--text-dimmer);}
 
+  /* ---------- X(旧Twitter) 埋め込みタイムライン ---------- */
+  .x-embed-wrap{
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    background:var(--surface);padding:4px;max-width:520px;
+  }
+  .x-embed-wrap .twitter-timeline{ border-radius:10px; } /* 読み込み後にX側が生成するiframeにも角丸を適用 */
+
   /* ---------- news modal (お知らせ本文ポップアップ) ---------- */
   .modal-overlay{position:fixed;inset:0;background:rgba(8,8,13,.82);backdrop-filter:blur(3px);
     display:flex;align-items:flex-start;justify-content:center;padding:56px 20px;overflow-y:auto;z-index:100;
@@ -265,10 +276,11 @@
       <a href="#shop">商品一覧</a>
       <a href="#order">オーダーメイド</a>
       <a href="#news">お知らせ</a>
+      <a href="#x-feed">X</a>
       <a href="#about">About</a>
     </nav>
     <div class="sns-badge">
-      <a href="https://x.com/" target="_blank" rel="noopener">X</a>
+      <a href="https://x.com/capdesignneo" target="_blank" rel="noopener">X</a>
       <a href="https://capofficial.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
       <a href="https://coconala.com/" target="_blank" rel="noopener">ココナラ</a>
     </div>
@@ -291,6 +303,10 @@
     <h1>配信を彩る、<br><span class="accent">光るデザイン。</span></h1>
     <p>ネオン風コメント枠・チャットフレーム・配信画面装飾を中心に、BOOTHでダウンロード販売中。既製品にない雰囲気は、オーダーメイドでも承ります。</p>
     <div class="cta-row">
+      <div>
+        <a class="btn btn-primary" href="https://capofficial.booth.pm/" target="_blank" rel="noopener">STORE ON BOOTH ↗<span class="shine"></span></a>
+        <span class="external-note">→ BOOTH（外部ショップ）に移動します</span>
+      </div>
       <a class="btn btn-pink" href="#shop">商品を見る<span class="shine"></span></a>
       <a class="btn btn-ghost" href="#order">オーダーメイドを依頼する<span class="shine"></span></a>
     </div>
@@ -332,6 +348,10 @@
       <span class="section-tag">SHOP</span>
       <h2>商品一覧</h2>
       <p>実際の作品をポートフォリオとして掲載しています（購入はBOOTHから）。</p>
+      <div>
+        <a class="btn btn-primary" style="margin-top:20px;padding:10px 22px;font-size:.85rem;" href="https://capofficial.booth.pm/" target="_blank" rel="noopener">全商品をBOOTHで見る ↗<span class="shine"></span></a>
+        <span class="external-note">→ BOOTH（外部ショップ）に移動します</span>
+      </div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-filter="all">すべて</button>
@@ -381,9 +401,29 @@
 </section>
 
 <!-- ==========================================================
-     お知らせ本文モーダル
-     クリックすると外部遷移せず、この中に本文がその場で表示されます。
+     Xの埋め込みタイムライン
+     X公式の埋め込みウィジェット(publish.twitter.com が発行するコード)を
+     そのまま使用しています。読み込みは非同期(async)なので、他の
+     コンテンツの表示を妨げません。widgets.js が href の中身を見て
+     自動的にiframeへ差し替えます。
 ========================================================== -->
+<div class="divider"></div>
+<section id="x-feed">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-tag">SOCIAL</span>
+      <h2>Xの最新投稿</h2>
+      <p>新作の告知や制作の様子はXでも発信しています。</p>
+    </div>
+    <div class="x-embed-wrap reveal">
+      <a class="twitter-timeline" data-theme="dark" data-width="100%" data-height="600"
+         href="https://twitter.com/capdesignneo?ref_src=twsrc%5Etfw">capdesignneoさんのポストを読み込み中...</a>
+    </div>
+  </div>
+</section>
+<!-- widgets.js: 上のtwitter-timelineリンクを見つけて自動的にタイムラインiframeに変換する -->
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal-box">
     <button class="modal-close" id="modal-close" aria-label="閉じる">✕</button>
@@ -402,7 +442,7 @@
     </div>
     <nav class="footer-nav">
       <a href="#shop">商品一覧</a><a href="#order">オーダーメイド</a><a href="#news">お知らせ</a><a href="#about">About</a>
-      <a href="https://x.com/" target="_blank" rel="noopener">X</a><a href="https://capofficial.booth.pm/" target="_blank" rel="noopener">BOOTH</a><a href="https://coconala.com/" target="_blank" rel="noopener">ココナラ</a>
+      <a href="https://x.com/capdesignneo" target="_blank" rel="noopener">X</a><a href="https://capofficial.booth.pm/" target="_blank" rel="noopener">BOOTH</a><a href="https://coconala.com/" target="_blank" rel="noopener">ココナラ</a>
     </nav>
   </div>
   <div class="wrap copyright">© 2026 Cap Design. All Rights Reserved.</div>
