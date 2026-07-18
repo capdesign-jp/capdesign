@@ -3,16 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>キャップデザイン</title>
+<title>Cap Design / キャップデザイン | 配信を彩るネオン素材ショップ</title>
 <link rel="icon" href="cap-design-icon.png">
 
-<!-- ==========================================================
-     セキュリティ対策:CSP(Content-Security-Policy)
-     「このページが読み込んでいいスクリプト・スタイル・画像等の
-     出どころ」をブラウザに明示的に制限させる設定。
-     万が一XSSでスクリプトを注入されても、許可していない外部への
-     データ送信や不正なスクリプト実行をブラウザ側でブロックできる。
-========================================================== -->
+<!-- セキュリティ対策: CSP(Content-Security-Policy)
+     このページが読み込んでよいスクリプト・スタイル・画像・通信先を制限。
+     PapaParse(cdnjs)・Googleフォント・Googleドライブ画像・
+     スプレッドシートCSV(docs.google.com)のみ許可しています。 -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
@@ -25,785 +22,650 @@
 ">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-<!-- ==========================================================
-     Googleフォントの読み込み
-     Orbitron   : ロゴ・見出し用の近未来的なフォント
-     Inter      : 本文用の読みやすいフォント
-     JetBrains Mono : ラベルや日付などコード風の細字表示に使用
-     すべてOFL(Open Font License)で商用利用も無料・無制限
-========================================================== -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* ==========================================================
-     ① 色・共通変数の定義(CSS変数 = カスタムプロパティ)
-     ここで色を1箇所にまとめておくと、後で配色を変えたい時に
-     この:root の中だけ書き換えれば全体に反映される
-  ========================================================== */
-  :root {
-    --bg: #14141f;        /* ページ全体の背景色。真っ黒(#000)ではなく
-                              少し明るい紺にして「暗すぎない」印象に */
-    --bg-soft: #1b1b29;   /* 背景よりわずかに明るいサブ背景 */
-    --card: #1f1f30;      /* カード(リンクやポートフォリオ)の背景 */
-    --pink: #ff4d9d;      /* ネオンピンク(メインカラー) */
-    --cyan: #29e5ff;      /* ネオンシアン(アクセント) */
-    --purple: #b57bff;    /* ネオンパープル(アクセント) */
-    --text: #f2f1f8;      /* 基本の文字色(ほぼ白) */
-    --muted: #8a87a3;     /* サブテキストの薄いグレー */
-    --line: #2b2a3d;      /* 枠線の色 */
+  :root{
+    --bg:#0a0b0f;
+    --bg-alt:#0c0e13;
+    --surface:#12141c;
+    --surface-2:#161923;
+    --line:#242832;
+    --cyan:#5fc9c3;
+    --pink:#d98bb0;
+    --amber:#c7a15a;
+    --violet:#8f85bd;
+    --text:#e9e7e2;
+    --text-dim:#8b8d97;
+    --text-dimmer:#565964;
   }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;overflow-x:hidden;line-height:1.75;}
+  h1,h2,h3{font-family:"Shippori Mincho",serif;font-weight:600;letter-spacing:.06em;}
+  .mono{font-family:"JetBrains Mono",monospace;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  button{font:inherit;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px;}
 
-  /* ==========================================================
-     ② リセットCSS
-     ブラウザごとに違うデフォルトの余白などを統一するおまじない
-  ========================================================== */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* ---------- global texture / progress ---------- */
+  .grain{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");}
+  .progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;z-index:9999;
+    background:linear-gradient(90deg,var(--pink),var(--cyan),var(--amber));
+    box-shadow:0 0 8px rgba(95,201,195,.45);transition:width .08s linear;}
 
-  html { scroll-behavior: smooth; } /* アンカーリンクでスムーズにスクロール */
+  /* ---------- reveal (safe: visible by default, hidden only once JS confirms) ---------- */
+  .reveal{opacity:1;transform:none;}
+  html.js-ready .reveal{opacity:0;transform:translateY(28px);
+    transition:opacity .8s cubic-bezier(.16,.8,.3,1), transform .8s cubic-bezier(.16,.8,.3,1);}
+  html.js-ready .reveal.visible{opacity:1;transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){ html.js-ready .reveal{opacity:1;transform:none;transition:none;} }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    position: relative;   /* ::before(背景演出)を絶対配置するための基準 */
-    overflow-x: hidden;    /* 横スクロールが出ないようにする */
-  }
+  /* ---------- signature bg: waveform / signal ---------- */
+  .wave-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .wave-bg svg{width:100%;height:100%;}
+  .wline{fill:none;stroke:var(--line);stroke-width:1;}
+  .wpulse{fill:none;stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 0 3px currentColor);
+    stroke-dasharray:8 500;animation:wtravel 9s linear infinite;}
+  .wpulse.c1{stroke:var(--cyan);color:var(--cyan);}
+  .wpulse.c2{stroke:var(--pink);color:var(--pink);animation-duration:12s;}
+  .wpulse.c3{stroke:var(--amber);color:var(--amber);animation-duration:14s;}
+  @keyframes wtravel{ to{stroke-dashoffset:-1400;} }
+  @media (prefers-reduced-motion: reduce){ .wpulse{animation:none;} }
 
-  /* ==========================================================
-     ③ 背景のふわふわ光るグラデーション演出
-     body::before は「bodyの前に疑似的な要素を1つ追加する」CSSの機能。
-     HTMLにタグを増やさずに装飾用の要素を作れるので便利。
-  ========================================================== */
-  body::before {
-    content: "";           /* 疑似要素は content が無いと表示されない */
-    position: fixed;       /* 画面に固定してスクロールしても動かない */
-    inset: -20%;           /* 上下左右に-20%はみ出させて、動いた時に
-                               背景の端が見えないようにする余裕を持たせる */
-    background:
-      radial-gradient(circle at 20% 20%, rgba(255, 77, 157, 0.10), transparent 45%),
-      radial-gradient(circle at 80% 30%, rgba(41, 229, 255, 0.10), transparent 45%),
-      radial-gradient(circle at 50% 80%, rgba(181, 123, 255, 0.10), transparent 45%);
-      /* 3色の淡い光を異なる位置に配置。数値0.10 = 透明度10%で控えめに */
-    animation: drift 18s ease-in-out infinite alternate;
-    z-index: 0; /* mainより奥(下)に表示するための重なり順 */
-  }
+  /* ---------- tilt / spotlight ---------- */
+  .tilt{transform-style:preserve-3d;will-change:transform;position:relative;}
+  .tilt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:radial-gradient(220px circle at var(--px,50%) var(--py,50%), rgba(95,201,195,.16), transparent 60%);
+    opacity:0;transition:opacity .3s;}
+  .tilt:hover::after{opacity:1;}
 
-  @keyframes drift {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(2%, -2%) scale(1.05); } /* わずかに移動+拡大 */
-  }
+  /* ---------- buttons ---------- */
+  .btn{position:relative;overflow:hidden;will-change:transform;display:inline-flex;align-items:center;gap:10px;
+    padding:15px 30px;border-radius:6px;font-weight:700;font-size:.95rem;
+    font-family:"Rajdhani",sans-serif;letter-spacing:.04em;transition:transform .2s, box-shadow .2s;}
+  .btn span.shine{position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);
+    transform:skewX(-20deg);transition:left .6s ease;}
+  .btn:hover span.shine{left:130%;}
+  .btn-primary{background:var(--cyan);color:#0b1512;box-shadow:0 0 16px rgba(95,201,195,.22);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 22px rgba(95,201,195,.32);}
+  .btn-pink{background:var(--pink);color:#210f19;box-shadow:0 0 16px rgba(217,139,176,.22);}
+  .btn-pink:hover{transform:translateY(-2px);box-shadow:0 0 22px rgba(217,139,176,.32);}
+  .btn-ghost{border:1px solid var(--line);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
 
-  main {
-    position: relative;
-    z-index: 1;             /* 背景(z-index:0)より手前に表示 */
-    max-width: 640px;        /* スマホでもPCでも読みやすい最大幅 */
-    margin: 0 auto;          /* 左右中央寄せ */
-    padding: 64px 24px 60px;
-    display: flex;
-    flex-direction: column;  /* 中身を縦に並べる */
-    align-items: center;     /* 中身を横方向の中央に寄せる */
-  }
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:50;background:rgba(10,14,22,.85);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);transition:background .3s,box-shadow .3s;}
+  header.scrolled{background:rgba(8,11,18,.92);box-shadow:0 8px 30px rgba(0,0,0,.35);}
+  .header-in{display:flex;align-items:center;justify-content:space-between;height:72px;}
+  .logo{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:700;font-family:"Rajdhani",sans-serif;letter-spacing:.05em;}
+  .logo .spark{color:var(--pink);font-size:1.2rem;text-shadow:0 0 6px rgba(217,139,176,.5);}
+  nav.main-nav{display:none;gap:28px;font-size:.9rem;color:var(--text-dim);}
+  nav.main-nav a{position:relative;padding:6px 0;transition:color .2s;overflow:hidden;}
+  nav.main-nav a::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:var(--cyan);
+    transform:scaleX(0);transform-origin:left;transition:transform .3s;box-shadow:0 0 8px var(--cyan);}
+  nav.main-nav a:hover{color:var(--cyan);}
+  nav.main-nav a:hover::after{transform:scaleX(1);}
+  .sns-badge{display:none;gap:14px;font-size:.85rem;color:var(--text-dim);}
+  @media(min-width:900px){ nav.main-nav{display:flex;} .sns-badge{display:flex;} }
 
-  /* ==========================================================
-     ④ ヒーローエリア(ロゴ・タイトル・説明文)
-  ========================================================== */
-  .avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 24px; /* 角丸の四角形(円にしたい場合は50%にする) */
-    box-shadow:
-      0 0 0 1px var(--line),                         /* 細い縁取り */
-      0 0 36px -4px rgba(255, 77, 157, 0.55),          /* ピンクの光暈 */
-      0 0 36px -4px rgba(41, 229, 255, 0.35);          /* シアンの光暈 */
-    object-fit: cover; /* 画像の縦横比を保ったまま枠に収める */
-    animation: float 5s ease-in-out infinite; /* ふわふわ浮くアニメ */
-  }
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:88vh;display:flex;align-items:center;border-bottom:1px solid var(--line);}
+  .hero-content{position:relative;z-index:2;padding:110px 24px 90px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:"JetBrains Mono",monospace;font-size:.76rem;
+    letter-spacing:.12em;color:var(--pink);border:1px solid rgba(217,139,176,.35);padding:6px 14px;border-radius:100px;margin-bottom:26px;}
+  .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 5px rgba(217,139,176,.6);}
+  .hero h1{font-size:clamp(2.1rem,5.6vw,3.9rem);line-height:1.35;max-width:15ch;}
+  .hero h1 .accent{background:linear-gradient(90deg,var(--pink),var(--cyan),var(--pink));background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(217,139,176,.3));
+    animation:hue-shift 10s linear infinite;}
+  @keyframes hue-shift{ to{background-position:200% center;} }
+  .hero p{margin-top:24px;max-width:44ch;color:var(--text-dim);font-size:1.02rem;}
+  .cta-row{display:flex;flex-wrap:wrap;gap:16px;margin-top:40px;}
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); } /* 上に6px移動して戻る */
-  }
+  /* ---------- section shell ---------- */
+  section{position:relative;padding:96px 0;border-bottom:1px solid var(--line);}
+  .divider{position:relative;height:2px;overflow:hidden;}
+  .divider::before{content:"";position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;
+    background:var(--pink);box-shadow:0 0 8px 2px rgba(217,139,176,.6);animation:divider-run 7s linear infinite;}
+  @keyframes divider-run{ 0%{left:-2%;} 100%{left:102%;} }
+  .section-head{margin-bottom:50px;}
+  .section-tag{font-family:"JetBrains Mono",monospace;font-size:.76rem;color:var(--amber);letter-spacing:.14em;display:block;margin-bottom:14px;}
+  .section-head h2{font-size:clamp(1.5rem,3.2vw,2.2rem);}
+  .section-head p{color:var(--text-dim);margin-top:14px;max-width:56ch;}
 
-  .eyebrow {
-    /* ロゴの上の小さいラベル文字("Stream Overlay Shop") */
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.15em; /* 文字間を広げてラベルらしく見せる */
-    color: var(--cyan);
-    text-transform: uppercase;
-    margin-top: 22px;
-  }
+  /* ---------- こだわり: 縦書き flow (reused component) ---------- */
+  .points-flow{display:flex;justify-content:space-between;gap:0;}
+  .point-item{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;padding:0 10px;border-left:1px solid var(--line);}
+  .point-item:first-child{border-left:none;}
+  .point-item .point-num{font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.18em;color:var(--amber);margin-bottom:16px;}
+  .point-vertical{writing-mode:vertical-rl;text-orientation:upright;font-family:"Shippori Mincho",serif;font-weight:600;
+    font-size:clamp(1rem,2.4vw,1.4rem);letter-spacing:.36em;color:var(--text);height:150px;
+    display:flex;align-items:center;justify-content:center;transition:color .4s,letter-spacing .4s;}
+  .point-item:hover .point-vertical{color:var(--pink);letter-spacing:.5em;}
+  .point-desc{margin-top:16px;font-size:.72rem;color:var(--text-dimmer);text-align:center;max-width:9em;line-height:1.7;}
+  .point-item::after{content:"";position:absolute;bottom:-1px;left:50%;width:0;height:1px;background:var(--pink);
+    box-shadow:0 0 6px rgba(217,139,176,.45);transform:translateX(-50%);transition:width 1s cubic-bezier(.16,.8,.3,1);}
+  .point-item.visible::after{width:56%;}
+  .point-item:nth-child(1)::after{transition-delay:.05s;}
+  .point-item:nth-child(2)::after{transition-delay:.28s;}
+  .point-item:nth-child(3)::after{transition-delay:.51s;}
+  @media(max-width:640px){ .point-vertical{height:120px;font-size:.95rem;letter-spacing:.28em;} .point-desc{font-size:.66rem;max-width:7em;} }
 
-  h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: clamp(30px, 7vw, 42px);
-    /* clamp(最小, 画面幅に応じた可変値, 最大) でスマホ〜PCまで
-       文字サイズが自動調整される */
-    letter-spacing: 0.03em;
-    color: #fff;
-    margin-top: 6px;
-    /* text-shadowを複数重ねてネオンの発光っぽさを表現 */
-    text-shadow:
-      0 0 10px rgba(255, 77, 157, 0.65),
-      0 0 26px rgba(255, 77, 157, 0.3),
-      0 0 46px rgba(41, 229, 255, 0.18);
-    animation: flicker 7s ease-in-out infinite; /* ネオン管のチラつき */
-  }
+  /* ---------- filter chips ---------- */
+  .filter-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px;}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:.76rem;letter-spacing:.05em;color:var(--text-dim);
+    border:1px solid var(--line);padding:8px 16px;border-radius:100px;cursor:pointer;background:transparent;transition:all .2s;}
+  .chip:hover{border-color:var(--cyan);color:var(--cyan);}
+  .chip.active{background:var(--cyan);border-color:var(--cyan);color:#0b1512;font-weight:700;}
+  .search-box{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:100px;
+    padding:8px 16px;color:var(--text-dim);font-size:.85rem;}
+  .search-box input{background:transparent;border:none;outline:none;color:var(--text);font-family:inherit;font-size:.85rem;width:140px;}
 
-  @keyframes flicker {
-    /* 数字はアニメーション全体を100%とした時の時間位置。
-       ほとんどの時間は opacity:1(点灯)で、一瞬だけ暗くする
-       ことで「ジジッ」と揺らぐネオン管っぽさを再現している */
-    0%, 92%, 100% { opacity: 1; }
-    93%   { opacity: 0.65; }
-    94%   { opacity: 1; }
-    95.5% { opacity: 0.8; }
-    96%   { opacity: 1; }
-  }
+  /* ---------- product grid ---------- */
+  .product-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+  @media(min-width:640px){ .product-grid{grid-template-columns:repeat(3,1fr);} }
+  @media(min-width:900px){ .product-grid{grid-template-columns:repeat(4,1fr);} }
+  .product-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);
+    transition:border-color .25s, transform .25s;}
+  .product-card:hover{border-color:var(--cyan);transform:translateY(-4px);}
+  .product-thumb{aspect-ratio:4/3;position:relative;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--surface-2),var(--surface));overflow:hidden;}
+  .product-thumb::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg,transparent 0 18px, rgba(255,255,255,.03) 18px 19px);}
+  .product-thumb .glyph{font-size:2.1rem;filter:drop-shadow(0 0 10px currentColor);position:relative;z-index:1;}
+  .product-body{padding:16px 16px 18px;}
+  .product-cat{font-family:"JetBrains Mono",monospace;font-size:.62rem;letter-spacing:.1em;color:var(--pink);margin-bottom:8px;display:block;}
+  .product-name{font-size:.92rem;font-weight:500;font-family:"Noto Sans JP";margin-bottom:8px;color:var(--text);line-height:1.5;}
+  .product-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .product-tags span{font-size:.66rem;color:var(--text-dimmer);border:1px solid var(--line);border-radius:100px;padding:2px 8px;}
+  .product-foot{display:flex;align-items:center;justify-content:space-between;}
+  .product-price{font-family:"Rajdhani";font-size:1.15rem;font-weight:700;color:var(--cyan);}
+  .product-link{font-size:.72rem;color:var(--text-dim);border:1px solid var(--line);border-radius:100px;padding:6px 12px;transition:all .2s;}
+  .product-link:hover{border-color:var(--cyan);color:var(--cyan);}
+  .empty-state{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-dimmer);font-size:.9rem;display:none;}
 
-  /* 動きが苦手な人・省電力設定の人向けに、動きを希望しない
-     設定(prefers-reduced-motion)がONの場合はアニメーションを止める */
-  @media (prefers-reduced-motion: reduce) {
-    h1, .avatar, body::before { animation: none; }
-  }
+  /* ---------- order / custom ---------- */
+  .order-box{border:1px solid rgba(217,139,176,.3);border-radius:16px;padding:52px 36px;
+    background:radial-gradient(circle at 20% 20%,rgba(217,139,176,.08),transparent 60%),var(--surface);
+    display:grid;gap:32px;animation:breathe 7s ease-in-out infinite;}
+  @keyframes breathe{ 0%,100%{box-shadow:0 0 0 rgba(217,139,176,0);} 50%{box-shadow:0 0 28px rgba(217,139,176,.12);} }
+  @media(min-width:860px){ .order-box{grid-template-columns:1.1fr .9fr;align-items:center;} }
+  .order-box h2{font-size:clamp(1.4rem,2.8vw,2rem);margin-bottom:16px;}
+  .order-box p{color:var(--text-dim);}
+  .order-steps{list-style:none;margin-top:18px;display:grid;gap:12px;}
+  .order-steps li{display:flex;gap:10px;align-items:flex-start;color:var(--text-dim);font-size:.92rem;}
+  .order-steps li .n{font-family:"JetBrains Mono",monospace;color:var(--pink);flex-shrink:0;}
+  .order-side{text-align:center;padding:26px;border:1px dashed var(--line);border-radius:12px;}
+  .order-side .big{font-family:"Rajdhani";font-size:2rem;color:var(--pink);text-shadow:0 0 10px rgba(217,139,176,.25);}
+  .order-side .small{color:var(--text-dimmer);font-size:.82rem;margin-top:6px;}
+  .order-side .btn{margin-top:20px;width:100%;justify-content:center;}
 
-  .tagline {
-    color: var(--muted);
-    font-size: 14.5px;
-    text-align: center;
-    margin-top: 14px;
-    max-width: 360px; /* 横に広がりすぎて読みにくくならないよう制限 */
-    line-height: 1.7; /* 行間を広めにして読みやすく */
-  }
+  /* ---------- news ---------- */
+  .news-list{border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .news-row{display:flex;gap:20px;align-items:baseline;padding:16px 22px;border-bottom:1px solid var(--line);transition:background .2s;}
+  .news-row:last-child{border-bottom:none;}
+  .news-row:hover{background:var(--surface);}
+  .news-date{font-family:"JetBrains Mono",monospace;font-size:.8rem;color:var(--amber);flex-shrink:0;width:96px;}
+  .news-title{color:var(--text-dim);font-size:.92rem;}
+  .news-row:hover .news-title{color:var(--text);}
 
-  /* ==========================================================
-     ⑤ リンクカード(BOOTH / ココナラ / X)
-  ========================================================== */
-  nav.links {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* カード同士の隙間 */
-    margin-top: 40px;
-  }
+  /* ---------- about ---------- */
+  .about-grid{display:grid;gap:40px;}
+  @media(min-width:860px){ .about-grid{grid-template-columns:1fr 1.1fr;align-items:center;} }
+  .about-grid .quote-mark{font-size:4.2rem;color:var(--violet);opacity:.4;font-family:"Shippori Mincho",serif;line-height:1;
+    text-shadow:0 0 18px rgba(143,133,189,.3);}
+  .about-text p{color:var(--text-dim);margin-bottom:14px;}
+  .about-text strong{color:var(--text);}
+  .tool-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .tool-tags span{font-family:"JetBrains Mono",monospace;font-size:.72rem;color:var(--text-dim);border:1px solid var(--line);
+    border-radius:100px;padding:5px 12px;}
 
-  .link-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-    padding: 17px 20px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    text-decoration: none; /* aタグの下線を消す */
-    color: var(--text);
-    /* transitionでhover時の変化を滑らかにする(0.2秒かけて変化) */
-    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  }
+  /* ---------- footer ---------- */
+  footer{padding:56px 0 60px;}
+  .footer-in{display:grid;gap:32px;}
+  @media(min-width:760px){ .footer-in{grid-template-columns:1fr 1fr;} }
+  .footer-nav{display:flex;flex-wrap:wrap;gap:14px 24px;font-size:.86rem;color:var(--text-dim);}
+  .footer-nav a:hover{color:var(--cyan);}
+  .copyright{margin-top:36px;font-size:.76rem;color:var(--text-dimmer);font-family:"JetBrains Mono",monospace;}
+  .hashtags{margin-top:14px;font-family:"JetBrains Mono",monospace;font-size:.74rem;color:var(--text-dimmer);}
 
-  .link-card:hover, .link-card:focus-visible {
-    transform: translateY(-2px); /* ホバーで少し浮き上がる */
-    outline: none;
-  }
-
-  /* サイトごとに違う色でホバー時に光らせる */
-  .link-card.booth:hover,    .link-card.booth:focus-visible    { border-color: var(--pink);   box-shadow: 0 0 26px -6px var(--pink); }
-  .link-card.coconala:hover, .link-card.coconala:focus-visible { border-color: var(--cyan);   box-shadow: 0 0 26px -6px var(--cyan); }
-  .link-card.x:hover,        .link-card.x:focus-visible        { border-color: var(--purple); box-shadow: 0 0 26px -6px var(--purple); }
-
-  .icon-wrap {
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0; /* 横幅が狭くなってもアイコンが潰れないようにする */
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .booth .icon-wrap    { background: rgba(255, 77, 157, 0.14); color: var(--pink); }
-  .coconala .icon-wrap { background: rgba(41, 229, 255, 0.14); color: var(--cyan); }
-  .x .icon-wrap        { background: rgba(181, 123, 255, 0.14); color: var(--purple); }
-
-  .icon-wrap svg { width: 22px; height: 22px; }
-
-  .link-text { flex: 1; } /* 残りの横幅いっぱいに広がる */
-  .link-title { font-weight: 600; font-size: 15.5px; }
-  .link-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
-  .arrow { color: var(--muted); font-size: 18px; transition: transform 0.2s ease; }
-  .link-card:hover .arrow { transform: translateX(3px); } /* 矢印が右にちょっと動く */
-
-  /* ==========================================================
-     ⑥ セクション共通の見出しスタイル(Portfolio / Blog で共通利用)
-  ========================================================== */
-  section { width: 100%; margin-top: 64px; }
-
-  .section-head {
-    display: flex;
-    align-items: baseline; /* 文字のベースラインを揃えて並べる */
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  .section-head .num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .section-head h2 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 16px;
-    letter-spacing: 0.04em;
-    color: var(--text);
-  }
-
-  /* ==========================================================
-     ⑦ ポートフォリオ:カードを2列グリッドで並べる
-  ========================================================== */
-  .portfolio-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 均等幅で2列 */
-    gap: 12px;
-  }
-
-  .portfolio-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    overflow: hidden; /* 角丸からはみ出た画像の角を隠す */
-
-    /* 最初は透明+少し下にずらしておき、画面に入ってきたら
-       JavaScript側で in-view クラスを付けてフェードインさせる */
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .portfolio-card.in-view { opacity: 1; transform: translateY(0); }
-
-  .portfolio-card:hover { border-color: var(--pink); box-shadow: 0 0 22px -8px var(--pink); }
-
-  .portfolio-thumb {
-    width: 100%;
-    aspect-ratio: 4 / 3; /* 画像枠の縦横比を固定(写真がなくても形が崩れない) */
-    display: flex;
-    object-fit: cover; /* <img>の場合、縦横比を保ったまま枠を埋める */
-    background: linear-gradient(135deg, rgba(255,77,157,0.18), rgba(41,229,255,0.18));
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-  }
-
-  .portfolio-info { padding: 12px 14px 14px; }
-  .portfolio-info .p-title { font-size: 13.5px; font-weight: 600; }
-  .portfolio-info .p-tag { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-
-  /* ==========================================================
-     ⑧ ブログ:1行リスト形式
-  ========================================================== */
-  .blog-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .blog-item {
-    display: flex;
-    justify-content: space-between; /* タイトルと日付を両端に配置 */
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 15px 18px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    text-decoration: none;
-    color: var(--text);
-    font-family: inherit; /* <button>はデフォルトで違うフォントになるため明示的に指定 */
-    text-align: left;
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.2s ease;
-  }
-
-  .blog-item.in-view { opacity: 1; transform: translateY(0); }
-  .blog-item:hover { border-color: var(--cyan); }
-
-  .blog-item .b-title { font-size: 14px; font-weight: 500; }
-  .blog-item .b-date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    white-space: nowrap; /* 日付が折り返さないようにする */
-  }
-
-  footer {
-    margin-top: 60px;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-align: center;
-  }
-
-  /* ==========================================================
-     ⑨ ブログ本文モーダル
-     position: fixed の半透明の黒い背景の上に、記事本文を
-     カード状に重ねて表示する定番の「モーダル」パターン
-  ========================================================== */
-  .modal-overlay {
-    position: fixed;
-    inset: 0; /* 画面全体を覆う(top/right/bottom/left全部0) */
-    background: rgba(8, 8, 13, 0.82);
-    backdrop-filter: blur(3px); /* 背景を少しぼかして奥行きを出す */
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 48px 20px;
-    overflow-y: auto; /* 本文が長い場合はモーダルごとスクロール */
-    z-index: 50;
-
-    /* 初期状態は非表示。JSで .open を付け外しして切り替える */
-    opacity: 0;
-    pointer-events: none; /* 非表示時はクリックを透過させる */
-    transition: opacity 0.25s ease;
-  }
-
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .modal-box {
-    position: relative;
-    width: 100%;
-    max-width: 560px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 40px 28px 32px;
-    box-shadow: 0 0 40px -8px rgba(41, 229, 255, 0.25);
-
-    /* モーダルが開く時、少し下からふわっと現れる動き */
-    transform: translateY(12px);
-    transition: transform 0.25s ease;
-  }
-
-  .modal-overlay.open .modal-box { transform: translateY(0); }
-
-  .modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--bg-soft);
-    color: var(--muted);
-    font-size: 14px;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
-  }
-
-  .modal-close:hover { color: var(--pink); border-color: var(--pink); }
-
-  .modal-date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11.5px;
-    color: var(--cyan);
-    letter-spacing: 0.08em;
-  }
-
-  .modal-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 19px;
-    margin-top: 8px;
-    line-height: 1.5;
-  }
-
-  .modal-body {
-    margin-top: 18px;
-    font-size: 14.5px;
-    line-height: 1.9;
-    color: var(--text);
-    white-space: pre-wrap; /* フォームで入力した改行をそのまま反映させる */
-  }
+  /* ---------- news modal (お知らせ本文ポップアップ) ---------- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(8,8,13,.82);backdrop-filter:blur(3px);
+    display:flex;align-items:flex-start;justify-content:center;padding:56px 20px;overflow-y:auto;z-index:100;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;}
+  .modal-overlay.open{opacity:1;pointer-events:auto;}
+  .modal-box{position:relative;width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;padding:40px 28px 32px;box-shadow:0 0 40px -8px rgba(95,201,195,.25);
+    transform:translateY(12px);transition:transform .25s ease;}
+  .modal-overlay.open .modal-box{transform:translateY(0);}
+  .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;
+    border:1px solid var(--line);background:var(--bg-alt);color:var(--text-dim);font-size:14px;cursor:pointer;
+    transition:color .15s ease, border-color .15s ease;}
+  .modal-close:hover{color:var(--pink);border-color:var(--pink);}
+  .modal-date{font-family:"JetBrains Mono",monospace;font-size:.75rem;color:var(--cyan);letter-spacing:.08em;}
+  .modal-title{font-size:1.2rem;margin-top:10px;line-height:1.6;font-family:"Shippori Mincho",serif;}
+  .modal-body{margin-top:18px;font-size:.92rem;line-height:1.9;color:var(--text-dim);white-space:pre-wrap;}
 </style>
 </head>
 <body>
-<main>
+<script>document.documentElement.classList.add('js-ready');</script>
+<div class="progress-bar" id="progressBar"></div>
+<div class="grain"></div>
 
-  <!-- ==========================================================
-       ヒーローエリア(ロゴ画像・ショップ名・説明文)
-  =========================================================== -->
-  <img class="avatar" src="cap-design-icon.png" alt="Cap Design ロゴ">
-  <p class="eyebrow">Stream Overlay Shop</p>
-  <h1>キャップ デザイン</h1>
-  <p class="tagline">配信用ネオンオーバーレイ素材の制作・販売。既製セットはBOOTH、オーダーメイドはココナラで承っています。</p>
+<header>
+  <div class="wrap header-in">
+    <div class="logo"><span class="spark">✦</span>Cap Design</div>
+    <nav class="main-nav">
+      <a href="#shop">商品一覧</a>
+      <a href="#order">オーダーメイド</a>
+      <a href="#news">お知らせ</a>
+      <a href="#about">About</a>
+    </nav>
+    <div class="sns-badge">
+      <a href="https://x.com/" target="_blank" rel="noopener">X</a>
+      <a href="https://capofficial.booth.pm/" target="_blank" rel="noopener">BOOTH</a>
+      <a href="https://coconala.com/" target="_blank" rel="noopener">ココナラ</a>
+    </div>
+  </div>
+</header>
 
-  <!-- ==========================================================
-       リンクカード(BOOTH / ココナラ / X)
+<section class="hero">
+  <div class="wave-bg">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="none">
+      <path class="wline" d="M0,150 C150,80 300,220 450,150 C600,80 750,220 900,150 C1000,110 1100,150 1200,140"/>
+      <path class="wpulse c1" d="M0,150 C150,80 300,220 450,150 C600,80 750,220 900,150 C1000,110 1100,150 1200,140"/>
+      <path class="wline" d="M0,430 C180,500 320,360 500,430 C680,500 820,360 1000,430 C1080,460 1140,430 1200,440"/>
+      <path class="wpulse c2" d="M0,430 C180,500 320,360 500,430 C680,500 820,360 1000,430 C1080,460 1140,430 1200,440"/>
+      <path class="wline" d="M0,660 C160,610 340,710 520,660 C700,610 880,710 1060,660 C1110,645 1160,655 1200,650"/>
+      <path class="wpulse c3" d="M0,660 C160,610 340,710 520,660 C700,610 880,710 1060,660 C1110,645 1160,655 1200,650"/>
+    </svg>
+  </div>
+  <div class="wrap hero-content">
+    <span class="eyebrow">STREAM ASSET SHOP</span>
+    <h1>配信を彩る、<br><span class="accent">光るデザイン。</span></h1>
+    <p>ネオン風コメント枠・チャットフレーム・配信画面装飾を中心に、BOOTHでダウンロード販売中。既製品にない雰囲気は、オーダーメイドでも承ります。</p>
+    <div class="cta-row">
+      <a class="btn btn-pink" href="#shop">商品を見る<span class="shine"></span></a>
+      <a class="btn btn-ghost" href="#order">オーダーメイドを依頼する<span class="shine"></span></a>
+    </div>
+  </div>
+</section>
 
-       アイコンについて:
-       公式のロゴ画像(BOOTHのロゴ、ココナラのロゴ等)は商標・著作物
-       にあたるため無断使用を避け、代わりに「Lucide Icons」という
-       完全無料・商用利用OK(ISCライセンス)の汎用アイコンセットの
-       SVGコードをそのまま埋め込んでいます。
-       ブランドロゴではなく「買い物袋」「吹き出し」「@マーク」
-       といった意味の近い一般的な記号にしているので、著作権の
-       心配なくそのまま使えます。
-  =========================================================== -->
-  <nav class="links">
+<section id="about" style="padding-top:80px;padding-bottom:80px;">
+  <div class="wrap about-grid">
+    <div class="quote-mark reveal">“</div>
+    <div class="about-text reveal">
+      <span class="section-tag">ABOUT</span>
+      <h2 style="margin-bottom:18px;">Cap Designについて</h2>
+      <p>個人配信者・VTuberさん向けに、<strong>ネオン風のコメント枠や配信素材</strong>を制作しています。「光っているのに、うるさくない」バランスを大事にしています。</p>
+      <p>制作はすべて<strong>Inkscape</strong>で行い、汎用性の高いPNG素材として仕上げています。</p>
+      <div class="tool-tags"><span>#VTuber素材</span><span>#配信素材</span><span>#Inkscape</span><span>#ネオンデザイン</span></div>
+    </div>
+  </div>
+</section>
 
-    <!-- BOOTHへのリンクカード -->
-    <a class="link-card booth" href="https://capofficial.booth.pm/" target="_blank" rel="noopener">
-      <div class="icon-wrap">
-        <!-- Lucide "shopping-bag"(買い物袋)アイコン -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-          <path d="M3 6h18"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
+<div class="divider"></div>
+<section style="padding-top:80px;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-tag">POINTS</span>
+      <h2>こだわり、３つのこと</h2>
+    </div>
+    <div class="points-flow">
+      <div class="point-item reveal"><span class="point-num">01</span><div class="point-vertical">発色</div><p class="point-desc">画面に映える、彩度と輝きのバランス</p></div>
+      <div class="point-item reveal"><span class="point-num">02</span><div class="point-vertical">汎用性</div><p class="point-desc">配信ソフト問わず使える透過PNG</p></div>
+      <div class="point-item reveal"><span class="point-num">03</span><div class="point-vertical">対応力</div><p class="point-desc">要望に寄り添うオーダーメイド</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+<section id="shop">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-tag">SHOP</span>
+      <h2>商品一覧</h2>
+      <p>実際の作品をポートフォリオとして掲載しています（購入はBOOTHから）。</p>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" data-filter="all">すべて</button>
+      <!-- カテゴリチップはスプレッドシートの「サブ情報」列から自動生成されます -->
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="キーワード検索">
       </div>
-      <div class="link-text">
-        <div class="link-title">BOOTH — 既製素材を見る</div>
-        <div class="link-sub">開始・終了・待機画面などの配信素材</div>
-      </div>
-      <div class="arrow">→</div>
-    </a>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+    <p class="empty-state" id="emptyState">条件に一致する商品が見つかりませんでした。</p>
+  </div>
+</section>
 
-    <!-- ココナラへのリンクカード -->
-    <a class="link-card coconala" href="https://coconala.com/" target="_blank" rel="noopener">
-      <div class="icon-wrap">
-        <!-- Lucide "message-square"(吹き出し)アイコン。依頼・相談のイメージ -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>
-          <path d="M8 10h.01M12 10h.01M16 10h.01"/>
-        </svg>
+<div class="divider"></div>
+<section id="order" style="background:var(--bg-alt);">
+  <div class="wrap">
+    <div class="order-box tilt reveal">
+      <div>
+        <span class="section-tag">CUSTOM ORDER</span>
+        <h2>あなただけの配信素材を<br>オーダーメイド</h2>
+        <p>「この配信者さんのイメージに合わせたい」「テーマカラーを指定したい」など、既製品にない要望はココナラでお受けしています。</p>
+        <ul class="order-steps">
+          <li><span class="n">01</span>ココナラのサービスページからご相談・ご依頼</li>
+          <li><span class="n">02</span>イメージ・カラー・使用ソフトをヒアリング</li>
+          <li><span class="n">03</span>ラフ確認→修正→納品（透過PNG）</li>
+        </ul>
       </div>
-      <div class="link-text">
-        <div class="link-title">ココナラ — オーダーメイド依頼</div>
-        <div class="link-sub">配信者ごとのカスタムデザインを制作</div>
+      <div class="order-side">
+        <div class="big">ORDER</div>
+        <div class="small">ココナラでカスタムオーダー受付中</div>
+        <a class="btn btn-pink" href="https://coconala.com/" target="_blank" rel="noopener">ココナラで依頼する<span class="shine"></span></a>
       </div>
-      <div class="arrow">→</div>
-    </a>
+    </div>
+  </div>
+</section>
 
-    <!-- Xへのリンクカード -->
-    <a class="link-card x" href="https://x.com/capdesignneo" target="_blank" rel="noopener">
-      <div class="icon-wrap">
-        <!-- Lucide "at-sign"(@マーク)アイコン。X公式ロゴではなく
-             汎用的な「アカウント・SNS」を示す記号として使用 -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-5.5 8.28"/>
-        </svg>
-      </div>
-      <div class="link-text">
-        <div class="link-title">X（Twitter）— 最新作をチェック</div>
-        <div class="link-sub">新作の告知・無料配布情報</div>
-      </div>
-      <div class="arrow">→</div>
-    </a>
-  </nav>
-
-  <!-- ==========================================================
-       ポートフォリオセクション
-       中身は空にしてあり、下部の<script>内の
-       portfolioItems 配列からJavaScriptが自動生成します。
-       → 作品を増やしたい時はHTMLを触らず、配列に1行足すだけでOK
-  =========================================================== -->
-  <section id="portfolio">
-    <div class="section-head"><span class="num">01</span><h2>Portfolio</h2></div>
-    <div class="portfolio-grid" id="portfolio-grid"></div>
-  </section>
-
-  <!-- ==========================================================
-       ブログセクション
-       同じ仕組みで blogItems 配列から自動生成
-  =========================================================== -->
-  <section id="blog">
-    <div class="section-head"><span class="num">02</span><h2>Blog</h2></div>
-    <div class="blog-list" id="blog-list"></div>
-  </section>
-
-  <footer>© 2026 Cap Design</footer>
-</main>
+<div class="divider"></div>
+<section id="news">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-tag">NEWS</span>
+      <h2>お知らせ</h2>
+    </div>
+    <div class="news-list reveal" id="newsList"></div>
+  </div>
+</section>
 
 <!-- ==========================================================
-     ブログ本文モーダル(ポップアップ)
-     ブログ項目をタップすると、外部リンクに飛ばずに
-     このモーダルの中に本文がその場で表示される。
-     普段は非表示(.open クラスが付いた時だけ表示)。
-=========================================================== -->
+     お知らせ本文モーダル
+     クリックすると外部遷移せず、この中に本文がその場で表示されます。
+========================================================== -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal-box">
     <button class="modal-close" id="modal-close" aria-label="閉じる">✕</button>
-    <p class="modal-date" id="modal-date"></p>
+    <p class="modal-date mono" id="modal-date"></p>
     <h3 class="modal-title" id="modal-title"></h3>
     <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
-<!--
-  PapaParse: CSVファイルをJavaScriptで扱いやすい形(配列)に変換して
-  くれる無料ライブラリ(MITライセンス・商用利用OK)。
-  Googleスプレッドシートを「ウェブに公開」した時に発行されるCSVの
-  URLを読み込むために使用する。
--->
+<footer>
+  <div class="wrap footer-in">
+    <div>
+      <div class="logo" style="margin-bottom:16px;"><span class="spark">✦</span>Cap Design</div>
+      <p style="color:var(--text-dimmer);font-size:.85rem;max-width:36ch;">配信を彩るネオン風素材ショップ。BOOTHでのダウンロード販売と、ココナラでのオーダーメイドに対応しています。</p>
+      <p class="hashtags">#VTuber素材　#配信素材</p>
+    </div>
+    <nav class="footer-nav">
+      <a href="#shop">商品一覧</a><a href="#order">オーダーメイド</a><a href="#news">お知らせ</a><a href="#about">About</a>
+      <a href="https://x.com/" target="_blank" rel="noopener">X</a><a href="https://capofficial.booth.pm/" target="_blank" rel="noopener">BOOTH</a><a href="https://coconala.com/" target="_blank" rel="noopener">ココナラ</a>
+    </nav>
+  </div>
+  <div class="wrap copyright">© 2026 Cap Design. All Rights Reserved.</div>
+</footer>
+
+<!-- PapaParse: Googleスプレッドシートを「ウェブに公開」したCSVを
+     扱いやすい配列に変換する無料ライブラリ(MITライセンス) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
 <script>
+(function(){
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   /* ============================================================
-     ============ ここだけ書き換えればOK ============
-     Googleスプレッドシートを「ファイル→共有→ウェブに公開」した際に
-     発行される、CSV形式のURLをここに貼り付ける。
+     ★設定データ★ ここを書き換えるだけでサイトの中身が変わります。
+     スプレッドシートの列: 種類(ポートフォリオ/ブログ) / タイトル /
+     サブ情報(カテゴリ or 日付) / 本文 / 画像(Googleドライブ共有リンク) /
+     URL(ポートフォリオのみ。BOOTHの商品ページURL。空欄ならショップ
+     トップページにリンク) / 承認(手動でOKと書いた行だけ表示される安全ゲート)
+  ============================================================= */
+  var SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-DALbevF8dqxKviQiATeySp1j_OAP50wYzNUierpu9-qtdVXrgzpPctZqdaH2Uk4C9s1zFLNHsIRE/pub?gid=1282257801&single=true&output=csv";
 
-     スプレッドシートの列の並び順(フォームの質問順と同じ):
-     A列: タイムスタンプ(自動)
-     B列: 種類    → "ポートフォリオ" または "ブログ"
-     C列: タイトル
-     D列: サブ情報(カテゴリ or 日付)
-     E列: 本文(ブログの時だけ記事の中身を書く。ポートフォリオは空欄でOK)
-     F列: 画像(任意・フォームの「ファイルのアップロード」で送信された
-          Googleドライブのリンクが自動的に入る。コード側で表示用URLに
-          自動変換するので、そのままで問題ない)
-     G列: 承認(★手動で追加する列。フォームの質問には含めない★)
-          この列に "OK" と入力した行だけがサイトに表示される。
-          何も投稿されていない行はサイトに表示されない仕組みなので、
-          誰かにフォームを荒らされても、あなたが承認しない限り
-          サイトには何も反映されない(最も安全な方式)。
-  ============================================================ */
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-DALbevF8dqxKviQiATeySp1j_OAP50wYzNUierpu9-qtdVXrgzpPctZqdaH2Uk4C9s1zFLNHsIRE/pub?gid=1282257801&single=true&output=csv";
+  // BOOTHショップのトップページ。商品ごとのURLが未入力の場合のリンク先
+  var BOOTH_SHOP_URL = "https://capofficial.booth.pm/";
 
-  // 初期表示用のダミーデータ(スプレッドシート未接続の間、見た目確認用)
-  const fallbackPortfolio = [
-    { title: "ネオンピンク 配信開始画面", tag: "Overlay / Neon", image: "" },
-    { title: "五色バリエーション待機画面", tag: "Overlay / Set", image: "" },
+  // 通信エラー・未接続時に表示する保険用のダミーデータ
+  var fallbackPortfolio = [
+    {title:"ネオンピンク 配信開始画面", tag:"Overlay / Neon", image:"", url:BOOTH_SHOP_URL},
+    {title:"五色バリエーション待機画面", tag:"Overlay / Set", image:"", url:BOOTH_SHOP_URL}
   ];
-  const fallbackBlog = [
-    { title: "Cap Designはじめました", date: "2026.07", body: "配信用ネオンオーバーレイのショップ、Cap Designをはじめました。少しずつ作品を増やしていきます。" },
+  var fallbackBlog = [
+    {title:"Cap Designはじめました", date:"2026.07", body:"配信用ネオンオーバーレイのショップ、Cap Designをはじめました。少しずつ作品を増やしていきます。"}
   ];
 
-  /* ============================================================
-     Googleドライブの共有リンクを、<img>で直接表示できる形式に
-     自動変換する関数。
-
-     Googleフォームの「ファイルのアップロード」で送信された画像は、
-     スプレッドシートに以下のような形式のリンクとして入ってくる:
-       https://drive.google.com/file/d/【ここがファイルID】/view?usp=drivesdk
-     このままでは画像として表示できないため、正規表現でファイルID
-     部分だけを取り出し、直接表示用のURL形式に組み替えている:
-       https://drive.google.com/uc?export=view&id=【ファイルID】
-
-     Drive以外のURL(Imgurや相対パスなど)がそのまま入っていた場合は
-     何も変換せずそのまま返す。
-  ============================================================ */
-  function toDirectImageUrl(url) {
-    if (!url) return "";
-
-    // パターン1: https://drive.google.com/file/d/【ID】/view の形式
-    let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-
-    // パターン2: https://drive.google.com/open?id=【ID】 や
-    //           https://drive.google.com/uc?id=【ID】 のような
-    //           クエリパラメータ形式(見つからなかった場合のみ試す)
-    if (!match) {
-      match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    }
-
-    if (match) {
-      const fileId = match[1];
-      // 以前は uc?export=view&id=... という形式を使っていたが、
-      // Google側の仕様変更でこの形式は外部サイトへの埋め込み表示が
-      // 不安定になっている。代わりに thumbnail エンドポイント
-      // (sz=w1000で幅1000pxの画像を取得)を使う方が確実に表示される。
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-    }
-    return url; // どちらのパターンにも一致しなければそのまま使う
+  // Googleドライブの共有リンクを<img>で直接表示できるURLに変換
+  function toDirectImageUrl(url){
+    if(!url) return "";
+    var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    return m ? ("https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1000") : url;
+  }
+  // XSS対策: スプレッドシート由来の文字列を無害なテキストとして扱う
+  function escapeHtml(str){
+    if(str === undefined || str === null) return "";
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   }
 
-  /* ============================================================
-     セキュリティ対策:HTMLエスケープ関数
-
-     スプレッドシート由来のテキスト(タイトル・サブ情報など)を
-     innerHTMLでそのまま挿入すると、もし中に <script> のような
-     タグが含まれていた場合、訪問者のブラウザでそのまま実行されて
-     しまう(XSS脆弱性)。
-     この関数は < > & " ' などの記号を無害な文字参照に変換し、
-     「ただの文字列」として表示されるようにする。
-  ============================================================ */
-  function escapeHtml(str) {
-    if (str === undefined || str === null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  var GLYPHS = ["◆","▣","▤","◯","⬡","▥"];
+  var GLYPH_COLORS = ["var(--cyan)","var(--pink)","var(--amber)","var(--violet)"];
+  var bar = document.getElementById('progressBar');
+  var header = document.querySelector('header');
+  function onScroll(){
+    var h = document.documentElement;
+    var pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = pct + '%';
+    if(h.scrollTop > 10){ header.classList.add('scrolled'); } else { header.classList.remove('scrolled'); }
   }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
 
-  // ---- ポートフォリオを画面に描画する処理 ----
-  function renderPortfolio(items) {
-    const grid = document.getElementById("portfolio-grid");
-    grid.innerHTML = ""; // 前回分をクリアしてから描画し直す
-    items.forEach(item => {
-      const card = document.createElement("div");
-      card.className = "portfolio-card";
-
-      const imageUrl = toDirectImageUrl(item.image);
-      const safeTitle = escapeHtml(item.title);
-      const safeTag = escapeHtml(item.tag);
-
-      // 画像URLがある場合は<img>タグ、無い場合は今まで通りの
-      // グラデーションのプレースホルダーを表示する
-      const thumbHtml = imageUrl
-        ? `<img class="portfolio-thumb" src="${imageUrl}" alt="${safeTitle}" loading="lazy" onerror="this.outerHTML='<div class=&quot;portfolio-thumb&quot;>PREVIEW</div>'">`
-        : `<div class="portfolio-thumb">PREVIEW</div>`;
-
-      card.innerHTML = `
-        ${thumbHtml}
-        <div class="portfolio-info">
-          <div class="p-title">${safeTitle}</div>
-          <div class="p-tag">${safeTag}</div>
-        </div>`;
-      grid.appendChild(card);
-    });
-  }
-
-  // ---- ブログ一覧を画面に描画する処理 ----
-  // 外部リンクではなく、クリックするとその場でモーダルが開く仕組みに変更
-  function renderBlog(items) {
-    const list = document.getElementById("blog-list");
-    list.innerHTML = "";
-    items.forEach(item => {
-      // <a>ではなく<button>にすることで、ページ移動をせずクリックだけ拾う
-      const btn = document.createElement("button");
-      btn.className = "blog-item";
-      btn.type = "button";
-      btn.innerHTML = `<span class="b-title">${escapeHtml(item.title)}</span><span class="b-date">${escapeHtml(item.date)}</span>`;
-      // クリックされたら、このitemの情報でモーダルを開く
-      btn.addEventListener("click", () => openBlogModal(item));
-      list.appendChild(btn);
-    });
-  }
-
-  // ---- ブログ本文モーダルを開く処理 ----
-  function openBlogModal(item) {
-    document.getElementById("modal-title").textContent = item.title;
-    document.getElementById("modal-date").textContent = item.date;
-    document.getElementById("modal-body").textContent = item.body || "";
-    document.getElementById("modal-overlay").classList.add("open");
-    document.body.style.overflow = "hidden"; // モーダル表示中は背景のスクロールを止める
-  }
-
-  // ---- ブログ本文モーダルを閉じる処理 ----
-  function closeBlogModal() {
-    document.getElementById("modal-overlay").classList.remove("open");
-    document.body.style.overflow = ""; // 背景のスクロールを元に戻す
-  }
-
-  // ✕ボタンをクリックしたら閉じる
-  document.getElementById("modal-close").addEventListener("click", closeBlogModal);
-  // 黒い背景部分(オーバーレイ自身)をクリックしても閉じる
-  document.getElementById("modal-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "modal-overlay") closeBlogModal();
-  });
-  // キーボードのEscキーでも閉じられるようにする(PC操作向け)
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeBlogModal();
-  });
-
-  /* ============================================================
-     スプレッドシート(CSV)を取得して、種類ごとに振り分ける処理
-
-     fetch()  : 指定したURLの中身を取ってくるブラウザ標準の機能
-     Papa.parse: 取ってきたCSVの文字列を、行ごとの配列に変換する
-     header:true にすると、1行目(見出し行)をキー名として
-     { タイムスタンプ: ..., 種類: ..., タイトル: ... } のような
-     扱いやすいオブジェクトの配列にしてくれる
-  ============================================================ */
-  async function loadFromSheet() {
-    // URLがまだ書き換えられていない場合はダミーデータのまま表示して終了
-    if (SHEET_CSV_URL.startsWith("ここに")) {
-      renderPortfolio(fallbackPortfolio);
-      renderBlog(fallbackBlog);
-      return;
-    }
-
-    try {
-      const res = await fetch(SHEET_CSV_URL);
-      const csvText = await res.text();
-
-      const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-      const rows = parsed.data; // 1行=1件のオブジェクトが入った配列
-
-      // rows は列見出し(フォームの質問文)がキー名になるので、
-      // 実際のフォームの質問文と完全に一致させる必要がある。
-      // ここでは "種類" "タイトル" "サブ情報" "本文" "画像" という
-      // 質問文を想定。
-
-      // ---- 承認ゲート(最も重要なセキュリティ処理) ----
-      // "承認" 列が "OK" になっている行だけを対象にする。
-      // これにより、誰かがフォームを荒らしても、あなたが手動で
-      // スプレッドシートに "OK" と書き込まない限り、
-      // その投稿は絶対にサイトに表示されない。
-      // trim() で前後の余計な空白を除去し、大文字小文字を無視して
-      // 比較することで、入力ミスにもある程度強くしている。
-      const approved = rows.filter(r => {
-        const flag = (r["承認"] || "").toString().trim().toUpperCase();
-        return flag === "OK";
+  /* reveal on scroll */
+  var io;
+  if(!('IntersectionObserver' in window)){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('visible'); });
+  } else {
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var siblingsRevealed = entry.target.parentElement.querySelectorAll('.reveal.visible').length;
+          entry.target.style.transitionDelay = (siblingsRevealed * 60) + 'ms';
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
       });
+    }, {threshold:.15, rootMargin:'0px 0px -60px 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  }
 
-      const portfolio = approved
-        .filter(r => r["種類"] === "ポートフォリオ")
-        .map(r => ({ title: r["タイトル"], tag: r["サブ情報"], image: r["画像"] }));
+  /* tilt + spotlight */
+  function attachTilt(card){
+    if(reduceMotion) return;
+    card.addEventListener('mousemove', function(e){
+      var r = card.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width;
+      var py = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--px', (px*100) + '%');
+      card.style.setProperty('--py', (py*100) + '%');
+      var rx = (py - .5) * -3;
+      var ry = (px - .5) * 3;
+      card.style.transform = 'perspective(700px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-2px)';
+    });
+    card.addEventListener('mouseleave', function(){ card.style.transform = ''; });
+  }
+  if(!reduceMotion){
+    document.querySelectorAll('.tilt').forEach(attachTilt);
+    document.querySelectorAll('.btn').forEach(function(btn){
+      btn.addEventListener('mousemove', function(e){
+        var r = btn.getBoundingClientRect();
+        var x = (e.clientX - r.left - r.width/2) * .12;
+        var y = (e.clientY - r.top - r.height/2) * .16;
+        btn.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      });
+      btn.addEventListener('mouseleave', function(){ btn.style.transform = ''; });
+    });
+  }
 
-      const blog = approved
-        .filter(r => r["種類"] === "ブログ")
-        .map(r => ({ title: r["タイトル"], date: r["サブ情報"], body: r["本文"] }));
-
-      // データが1件も取れなかった場合は念のためダミー表示にフォールバック
-      renderPortfolio(portfolio.length ? portfolio : fallbackPortfolio);
-      renderBlog(blog.length ? blog : fallbackBlog);
-
-    } catch (err) {
-      // 通信エラー時もサイトが真っ白にならないよう、ダミーデータを表示
-      console.error("スプレッドシートの読み込みに失敗:", err);
-      renderPortfolio(fallbackPortfolio);
-      renderBlog(fallbackBlog);
-    }
-
-    // 描画し終わったカードを、スクロール出現アニメーションの監視対象に登録
-    document.querySelectorAll(".portfolio-card, .blog-item").forEach(el => observer.observe(el));
+  // 動的に生成した要素をreveal監視に登録するヘルパー
+  function observeReveal(el){
+    el.classList.add('reveal');
+    if(io){ io.observe(el); } else { el.classList.add('visible'); }
   }
 
   /* ============================================================
-     スクロールで画面に入ってきたらフワッと表示させる処理
-     IntersectionObserver = 「要素が画面内に入ったかどうか」を
-     監視してくれるブラウザ標準の機能。
-     スクロールイベントを自分で計算するより軽くて簡単。
-  ============================================================ */
-  const observer = new IntersectionObserver((entries) => {
-    // entries には「監視している要素たちの現在の状態」が入ってくる
-    entries.forEach(e => {
-      if (e.isIntersecting) {       // 画面内に入ったかどうかの判定
-        e.target.classList.add("in-view"); // CSSのin-viewクラスを付与
-                                            // → CSS側のtransitionでフェードイン
-      }
-    });
-  }, { threshold: 0.15 }); // 要素の15%が見えたタイミングで発火する設定
+     ポートフォリオ(商品一覧)の描画
+     現在読み込み中のデータを portfolioData に保持しておき、
+     カテゴリチップ／検索ボックスから何度でも絞り込めるようにする
+  ============================================================= */
+  var grid = document.getElementById('productGrid');
+  var emptyState = document.getElementById('emptyState');
+  var filterRow = document.querySelector('.filter-row');
+  var portfolioData = [];
+  var currentFilter = 'all';
+  var currentQuery = '';
 
-  // ページを開いたタイミングでスプレッドシートからデータを読み込む
+  function buildFilterChips(items){
+    // 既存の動的チップ(すべて以外)を一旦削除してから、実データのタグで作り直す
+    filterRow.querySelectorAll('.chip[data-dynamic]').forEach(function(c){ c.remove(); });
+    var tags = [];
+    items.forEach(function(i){ if(i.tag && tags.indexOf(i.tag) === -1) tags.push(i.tag); });
+    tags.forEach(function(tag){
+      var chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.type = 'button';
+      chip.setAttribute('data-filter', tag);
+      chip.setAttribute('data-dynamic', '1');
+      chip.textContent = tag;
+      chip.addEventListener('click', function(){
+        filterRow.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+        chip.classList.add('active');
+        currentFilter = tag;
+        renderPortfolio(portfolioData);
+      });
+      filterRow.insertBefore(chip, filterRow.querySelector('.search-box'));
+    });
+  }
+
+  function renderPortfolio(items){
+    portfolioData = items;
+    var filtered = items.filter(function(p){
+      var matchFilter = currentFilter === 'all' || p.tag === currentFilter;
+      var matchQuery = !currentQuery || (p.title + ' ' + (p.tag||'')).toLowerCase().indexOf(currentQuery) !== -1;
+      return matchFilter && matchQuery;
+    });
+    grid.innerHTML = '';
+    filtered.forEach(function(p, idx){
+      var card = document.createElement('div');
+      card.className = 'product-card';
+      var imageUrl = toDirectImageUrl(p.image);
+      var safeTitle = escapeHtml(p.title);
+      var safeTag = escapeHtml(p.tag);
+      var itemUrl = p.url && p.url.trim() ? p.url.trim() : BOOTH_SHOP_URL; // URL未入力ならショップトップへ
+      var thumbHtml = imageUrl
+        ? '<img class="product-thumb" style="width:100%;height:100%" src="'+imageUrl+'" alt="'+safeTitle+'" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;product-thumb&quot;><span class=&quot;glyph&quot;>'+GLYPHS[idx % GLYPHS.length]+'</span></div>\'">'
+        : '<div class="product-thumb"><span class="glyph" style="color:'+GLYPH_COLORS[idx % GLYPH_COLORS.length]+'">'+GLYPHS[idx % GLYPHS.length]+'</span></div>';
+      card.innerHTML =
+        thumbHtml +
+        '<div class="product-body">' +
+          '<span class="product-cat">'+safeTag+'</span>' +
+          '<div class="product-name">'+safeTitle+'</div>' +
+          '<div class="product-foot">' +
+            '<a class="product-link" href="'+escapeHtml(itemUrl)+'" target="_blank" rel="noopener">BOOTHで見る</a>' +
+          '</div>' +
+        '</div>';
+      grid.appendChild(card);
+      card.classList.add('tilt');
+      attachTilt(card);
+      observeReveal(card);
+    });
+    emptyState.style.display = filtered.length ? 'none' : 'block';
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function(e){
+    currentQuery = e.target.value.trim().toLowerCase();
+    renderPortfolio(portfolioData);
+  });
+  filterRow.querySelector('[data-filter="all"]').addEventListener('click', function(){
+    filterRow.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+    this.classList.add('active');
+    currentFilter = 'all';
+    renderPortfolio(portfolioData);
+  });
+
+  /* ============================================================
+     お知らせ(ブログ)の描画。クリックで外部遷移せずモーダルを開く
+  ============================================================= */
+  function renderNews(items){
+    var list = document.getElementById('newsList');
+    list.innerHTML = '';
+    items.forEach(function(item){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'news-row';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.style.background = 'transparent';
+      btn.style.border = 'none';
+      btn.style.borderBottom = '1px solid var(--line)';
+      btn.style.cursor = 'pointer';
+      btn.innerHTML = '<span class="news-date mono">'+escapeHtml(item.date)+'</span><span class="news-title">'+escapeHtml(item.title)+'</span>';
+      btn.addEventListener('click', function(){ openNewsModal(item); });
+      list.appendChild(btn);
+      observeReveal(btn);
+    });
+  }
+
+  function openNewsModal(item){
+    document.getElementById('modal-title').textContent = item.title;
+    document.getElementById('modal-date').textContent = item.date;
+    document.getElementById('modal-body').textContent = item.body || '';
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeNewsModal(){
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('modal-close').addEventListener('click', closeNewsModal);
+  document.getElementById('modal-overlay').addEventListener('click', function(e){
+    if(e.target.id === 'modal-overlay') closeNewsModal();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeNewsModal(); });
+
+  /* ============================================================
+     Googleスプレッドシート(CSV)を取得して種類ごとに振り分ける
+  ============================================================= */
+  async function loadFromSheet(){
+    try{
+      var res = await fetch(SHEET_CSV_URL);
+      var csvText = await res.text();
+      var parsed = Papa.parse(csvText, {header:true, skipEmptyLines:true});
+      var rows = parsed.data;
+
+      // 承認ゲート: 「承認」列がOKの行だけを対象にする
+      var approved = rows.filter(function(r){ return (r["承認"] || "").toString().trim().toUpperCase() === "OK"; });
+
+      var portfolio = approved.filter(function(r){ return r["種類"] === "ポートフォリオ"; })
+        .map(function(r){ return {title:r["タイトル"], tag:r["サブ情報"], image:r["画像"], url:r["URL"]}; });
+      var news = approved.filter(function(r){ return r["種類"] === "ブログ"; })
+        .map(function(r){ return {title:r["タイトル"], date:r["サブ情報"], body:r["本文"]}; });
+
+      var portfolioFinal = portfolio.length ? portfolio : fallbackPortfolio;
+      renderPortfolio(portfolioFinal);
+      buildFilterChips(portfolioFinal);
+      renderNews(news.length ? news : fallbackBlog);
+    }catch(err){
+      // 通信エラー時もサイトが真っ白にならないよう、ダミーデータを表示
+      console.error('スプレッドシートの読み込みに失敗:', err);
+      renderPortfolio(fallbackPortfolio);
+      buildFilterChips(fallbackPortfolio);
+      renderNews(fallbackBlog);
+    }
+  }
+
   loadFromSheet();
+})();
 </script>
 </body>
 </html>
